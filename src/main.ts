@@ -14,9 +14,16 @@ import { Request, Response, NextFunction, RequestHandler } from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const helmetMw: RequestHandler = (
+  const helmetGlobal: RequestHandler = (
     helmet as unknown as () => RequestHandler
   )();
+  const helmetSwagger: RequestHandler = (
+    helmet as unknown as (opts: unknown) => RequestHandler
+  )({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  });
   const compressionMw: RequestHandler = (
     compression as unknown as () => RequestHandler
   )();
@@ -31,7 +38,14 @@ async function bootstrap() {
     standardHeaders: true,
     legacyHeaders: false,
   });
-  app.use(helmetMw);
+  app.use(helmetGlobal);
+  app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+    res.removeHeader('Content-Security-Policy');
+    res.removeHeader('Cross-Origin-Embedder-Policy');
+    res.removeHeader('Cross-Origin-Resource-Policy');
+    next();
+  });
+  app.use('/api', helmetSwagger);
   app.use(compressionMw);
   app.use(morganMw);
   app.use(rateLimiterMw);

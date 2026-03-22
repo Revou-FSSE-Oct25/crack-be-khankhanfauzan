@@ -88,12 +88,33 @@ export class RoomsController {
           type: 'array',
           items: { $ref: getSchemaPath(RoomDto) },
         },
+        meta: {
+          type: 'object',
+          properties: {
+            totalRooms: { type: 'number', example: 22 },
+            totalAvailable: { type: 'number', example: 14 },
+            totalUnavailable: { type: 'number', example: 2 },
+            totalOccupied: { type: 'number', example: 6 },
+          },
+        },
       },
     },
   })
   findAll(@Query() query: GetRoomsQueryDto) {
     const data = this.roomsService.findAll(query);
-    return { status: 200, message: 'Rooms fetched', data };
+    const totalRooms = data.length;
+    const totalAvailable = data.filter((r) => r.status === 'available').length;
+    const totalUnavailable = data.filter(
+      (r) => r.status === 'unavailable',
+    ).length;
+    const totalOccupied = data.filter((r) => r.status === 'occupied').length;
+    const meta = {
+      totalRooms,
+      totalAvailable,
+      totalUnavailable,
+      totalOccupied,
+    };
+    return { status: 200, message: 'Rooms fetched', data, meta };
   }
 
   @Get(':id')

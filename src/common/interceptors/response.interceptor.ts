@@ -9,6 +9,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiResponse } from 'src/rooms/types/api-response.interface';
 import { Response } from 'express';
+import { Request } from 'express';
 
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<
@@ -21,9 +22,17 @@ export class ResponseInterceptor<T> implements NestInterceptor<
   ): Observable<ApiResponse<T>> {
     const ctx = context.switchToHttp();
     const res = ctx.getResponse<Response>();
+    const req = ctx.getRequest<Request>();
     return next.handle().pipe(
       map((data: T) => {
         const status: number = res.statusCode ?? HttpStatus.OK;
+        const url: string = (req.originalUrl || req.url) ?? '';
+        const isSwagger =
+          url === '/api-json' ||
+          (url.startsWith('/api') && !url.startsWith('/api/v1'));
+        if (isSwagger || typeof data === 'string') {
+          return data as unknown as ApiResponse<T>;
+        }
         const payload = data as unknown as Record<string, unknown>;
         if (
           payload &&
