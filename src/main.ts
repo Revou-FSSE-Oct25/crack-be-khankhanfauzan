@@ -1,14 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import helmet from 'helmet';
 import compression from 'compression';
-import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
-import { v4 as uuidv4 } from 'uuid';
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 
 async function bootstrap() {
@@ -27,17 +24,7 @@ async function bootstrap() {
   const compressionMw: RequestHandler = (
     compression as unknown as () => RequestHandler
   )();
-  const morganMw: RequestHandler = (
-    morgan as unknown as (format: string) => RequestHandler
-  )('combined');
-  const rateLimiterMw: RequestHandler = (
-    rateLimit as unknown as (opts: unknown) => RequestHandler
-  )({
-    windowMs: 15 * 60 * 1000,
-    limit: 100,
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
+
   app.use(helmetGlobal);
   app.use('/api', (req: Request, res: Response, next: NextFunction) => {
     res.removeHeader('Content-Security-Policy');
@@ -47,23 +34,14 @@ async function bootstrap() {
   });
   app.use('/api', helmetSwagger);
   app.use(compressionMw);
-  app.use(morganMw);
-  app.use(rateLimiterMw);
-  app.use(
-    (
-      req: Request & { requestId?: string },
-      res: Response,
-      next: NextFunction,
-    ) => {
-      const id = uuidv4();
-      req.requestId = id;
-      res.setHeader('X-Request-ID', id);
-      next();
-    },
-  );
+
   app.enableCors();
 
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api');
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+  });
 
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalPipes(
@@ -82,10 +60,13 @@ async function bootstrap() {
       'API documentation for RevoU CRACK BE Project - Emerald House by Fauzan Akbar Khan',
     )
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const document = SwaggerModule.createDocument(app as any, config);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   SwaggerModule.setup('api', app as any, document);
 
-  await app.listen(process.env.PORT ?? 3001);
+  await app.listen(process.env.PORT || 3001, '0.0.0.0');
 }
 void bootstrap();

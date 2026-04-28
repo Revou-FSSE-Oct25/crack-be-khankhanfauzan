@@ -6,7 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { ApiResponse } from 'src/rooms/types/api-response.interface';
+import { ApiResponse } from 'src/types/api-response.interface';
 
 interface HttpExceptionResponse {
   message: string | string[];
@@ -19,6 +19,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+
+    if (!(exception instanceof HttpException)) {
+      console.error('Unhandled Exception:', exception);
+    }
 
     const status =
       exception instanceof HttpException
