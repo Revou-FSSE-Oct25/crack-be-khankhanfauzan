@@ -15,11 +15,20 @@ import { AtGuard } from './auth/guards/at.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { MaintenancesModule } from './modules/maintenances/maintenances.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
+import { InvoicesModule } from './modules/invoices/invoices.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
@@ -32,6 +41,9 @@ import { ScheduleModule } from '@nestjs/schedule';
     FacilitiesModule,
     PrismaModule,
     BookingsModule,
+    MaintenancesModule,
+    TransactionsModule,
+    InvoicesModule,
   ],
   controllers: [AppController],
   providers: [

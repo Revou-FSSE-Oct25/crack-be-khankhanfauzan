@@ -10,7 +10,7 @@ import { UpdateBookingDto } from './dto/update-booking.dto';
 import { GetBookingsQueryDto } from './dto/get-bookings.dto';
 import { BookingsRepository } from './bookings.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { RentType, BookingStatus, Prisma, Booking } from '@prisma/client';
+import { RentType, BookingStatus, Prisma, Booking, InvoiceStatus } from '@prisma/client';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import type { ApiListResponse, ApiResponse } from 'src/types/api-response.interface';
 
@@ -97,7 +97,11 @@ export class BookingsService {
 
       const totalPrice = new Prisma.Decimal(Number(pricePerUnit) * duration);
 
-      // 5. Create Booking
+      // 5. Calculate Due Date (24 hours from now)
+      const dueDate = new Date();
+      dueDate.setHours(dueDate.getHours() + 24);
+
+      // 6. Create Booking & Automated Invoice
       const booking = await this.repository.create({
         tenant: { connect: { id: tenantId } },
         room: { connect: { id: roomId } },
@@ -108,11 +112,18 @@ export class BookingsService {
         pricePerUnit,
         totalPrice,
         status: BookingStatus.pending_payment,
+        invoices: {
+          create: {
+            totalAmount: totalPrice,
+            dueDate: dueDate,
+            status: InvoiceStatus.unpaid,
+          },
+        },
       });
 
       return {
         status: 201,
-        message: 'Booking created successfully',
+        message: 'Booking and Invoice created successfully',
         data: booking,
       };
     } catch (error) {

@@ -117,3 +117,33 @@ Digunakan untuk mendapatkan daftar fasilitas yang tersedia.
 ## Swagger API Docs
 Semua dokumentasi lengkap, termasuk model DTO, validasi form, dan contoh respon dapat diakses melalui Swagger UI:
 👉 **`http://localhost:3001/api`** (Jika dijalankan secara lokal).
+
+---
+
+## 💳 Phase 2: Invoices & Payment Transactions
+
+Sistem kini mendukung pembuatan Invoice otomatis dan alur pembayaran lengkap.
+
+### 1. Automated Invoice Generation
+- **Trigger:** Setiap kali Tenant membuat Booking baru (`POST /bookings`), sistem secara otomatis akan membuat record `Invoice` dengan status `unpaid`.
+- **Due Date:** Tenggat waktu pembayaran diatur otomatis 24 jam sejak Booking dibuat.
+- **Endpoint:** Tenant dapat melihat tagihan mereka melalui `GET /invoices`.
+
+### 2. Upload Payment Proof (Tenant)
+- **Proses:** Setelah mentransfer dana, Tenant wajib mengunggah bukti transfer.
+- **Endpoint:** `POST /transactions/upload-proof`
+- **Format:** Menggunakan `multipart/form-data` dengan field:
+  - `invoiceId` (string)
+  - `amount` (number)
+  - `paymentMethod` (string)
+  - `file` (file gambar: jpg/jpeg/png)
+- **Hasil:** Status transaksi menjadi `pending` dan menunggu verifikasi Admin. File disimpan di `/uploads` dan dapat diakses publik (Static Serving).
+
+### 3. Payment Verification (Admin)
+- **Proses:** Admin mengecek mutasi rekening dan memverifikasi bukti yang diunggah Tenant.
+- **Endpoint:** `PATCH /transactions/:id/verify`
+- **Payload:** `{ "status": "verified" | "rejected", "rejectReason": "..." }`
+- **Otomasi:** Jika Admin mengirim status `verified`, sistem secara atomik (*Database Transaction*) akan:
+  1. Mengubah status Transaction menjadi `verified`.
+  2. Mengubah status Invoice terkait menjadi `paid`.
+  3. Mengubah status Booking terkait menjadi `confirmed`.
