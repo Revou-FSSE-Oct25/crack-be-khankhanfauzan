@@ -24,12 +24,14 @@ async function main() {
 
     // 1. FACILITIES
     const facilitiesData = [
-        { name: 'WiFi', description: 'High speed internet' },
-        { name: 'AC', description: 'Air conditioning' },
-        { name: 'Kamar Mandi Dalam', description: 'En-suite bathroom' },
-        { name: 'Kasur', description: 'Spring bed' },
-        { name: 'Lemari', description: 'Wardrobe' },
-        { name: 'Meja Kerja', description: 'Work desk' },
+        { name: 'WiFi', description: 'Kecepatan hingga 150 mbps' },
+        { name: 'AC', description: '1/2 PK' },
+        { name: 'Kamar Mandi Dalam', description: 'Ember, Gayung, dan Toilet Jongkok' },
+        { name: 'Kasur', description: 'Spring bed queen size' },
+        { name: 'Lemari', description: 'Ukuran standar dengan 2 pintu' },
+        { name: 'Meja Kerja', description: 'Ukuran standar dengan laci penyimpanan' },
+        { name: 'Kitchen Set', description: 'Meja dapur dan wastafel' },
+        { name: 'Listrik', description: 'Include listrik' },
     ];
 
     const facilities: any[] = [];
@@ -105,66 +107,539 @@ async function main() {
     console.log('✅ Users & Profiles seeded');
 
     // 3. ROOMS
-    const room1 = await prisma.room.create({
-        data: {
+    const roomsData = [
+        {
             roomNumber: '101',
             floor: 1,
+            roomType: RoomType.standard,
+            priceMonthly: 1500000,
+            status: RoomStatus.available,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+            ]
+        },
+        {
+            roomNumber: '102',
+            floor: 1,
+            roomType: RoomType.standard,
+            priceMonthly: 1500000,
+            status: RoomStatus.available,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+            ]
+        },
+        {
+            roomNumber: '103',
+            floor: 1,
+            roomType: RoomType.standard,
+            priceMonthly: 1500000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+            ]
+        },
+        {
+            roomNumber: '104',
+            floor: 1,
+            roomType: RoomType.standard,
+            priceMonthly: 1500000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+            ]
+        },
+        {
+            roomNumber: '105',
+            floor: 1,
+            roomType: RoomType.standard,
+            priceMonthly: 1500000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+            ]
+        },
+        {
+            roomNumber: '106',
+            floor: 1,
+            roomType: RoomType.standard,
+            priceMonthly: 1500000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+            ]
+        },
+        {
+            roomNumber: '107',
+            floor: 1,
+            roomType: RoomType.standard,
+            priceMonthly: 1500000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+            ]
+        },
+        {
+            roomNumber: '108',
+            floor: 1,
+            roomType: RoomType.standard,
+            priceMonthly: 1500000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+            ]
+        },
+        {
+            roomNumber: '109',
+            floor: 1,
+            roomType: RoomType.standard,
+            priceMonthly: 1500000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+            ]
+        },
+        {
+            roomNumber: '110',
+            floor: 1,
+            roomType: RoomType.standard,
+            priceMonthly: 1500000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+            ]
+        },
+        {
+            roomNumber: '111',
+            floor: 1,
+            roomType: RoomType.standard,
+            priceMonthly: 1500000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+            ]
+        },
+        {
+            roomNumber: '201',
+            floor: 2,
+            roomType: RoomType.standard,
+            priceMonthly: 1750000,
+            status: RoomStatus.unavailable,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: '202',
+            floor: 2,
+            roomType: RoomType.standard,
+            priceMonthly: 1000000,
+            status: RoomStatus.available,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: '203',
+            floor: 2,
+            roomType: RoomType.standard,
+            priceMonthly: 1000000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: '204',
+            floor: 2,
+            roomType: RoomType.standard,
+            priceMonthly: 1000000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: '205',
+            floor: 2,
+            roomType: RoomType.standard,
+            priceMonthly: 1000000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: '206',
+            floor: 2,
+            roomType: RoomType.standard,
+            priceMonthly: 1000000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: '207',
+            floor: 2,
+            roomType: RoomType.standard,
+            priceMonthly: 1000000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: '208',
+            floor: 2,
+            roomType: RoomType.standard,
+            priceMonthly: 1750000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: '209',
+            floor: 2,
+            roomType: RoomType.standard,
+            priceMonthly: 1000000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: '210',
+            floor: 2,
+            roomType: RoomType.standard,
+            priceMonthly: 1000000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: '211',
+            floor: 2,
+            roomType: RoomType.standard,
+            priceMonthly: 1000000,
+            status: RoomStatus.occupied,
+            length: 4.0,
+            width: 3.0,
+            area: 12.0,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: 'S1',
+            floor: 1,
             roomType: RoomType.studio,
-            priceDaily: 150000,
-            priceWeekly: 900000,
-            priceMonthly: 2500000,
+            priceMonthly: 2000000,
             status: RoomStatus.occupied,
             length: 4.5,
             width: 3.5,
             area: 15.75,
             unit: 'm',
-            roomFacilities: {
-                create: [
-                    { facilityId: facilities[0].id }, // WiFi
-                    { facilityId: facilities[1].id }, // AC
-                    { facilityId: facilities[2].id }, // Kamar Mandi Dalam
-                ]
-            }
-        }
-    });
-
-    const room2 = await prisma.room.create({
-        data: {
-            roomNumber: '102',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: 'S2',
             floor: 1,
-            roomType: RoomType.standard,
-            priceDaily: 100000,
-            priceWeekly: 600000,
-            priceMonthly: 1800000,
-            status: RoomStatus.available,
-            length: 3.0,
-            width: 3.0,
-            area: 9.0,
-            unit: 'm',
-            roomFacilities: {
-                create: [
-                    { facilityId: facilities[0].id }, // WiFi
-                    { facilityId: facilities[3].id }, // Kasur
-                ]
-            }
-        }
-    });
-
-    const room3 = await prisma.room.create({
-        data: {
-            roomNumber: '201',
-            floor: 2,
             roomType: RoomType.studio,
-            priceDaily: 150000,
-            priceWeekly: 900000,
-            priceMonthly: 2500000,
-            status: RoomStatus.unavailable,
+            priceMonthly: 2000000,
+            status: RoomStatus.occupied,
             length: 4.5,
             width: 3.5,
             area: 15.75,
             unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+                facilities[7].id,
+            ]
+        },
+        {
+            roomNumber: 'S3',
+            floor: 1,
+            roomType: RoomType.studio,
+            priceMonthly: 2000000,
+            status: RoomStatus.occupied,
+            length: 4.5,
+            width: 3.5,
+            area: 15.75,
+            unit: 'm',
+            facilitiesIds: [
+                facilities[0].id,
+                facilities[1].id,
+                facilities[2].id,
+                facilities[3].id,
+                facilities[4].id,
+                facilities[5].id,
+                facilities[6].id,
+                facilities[7].id,
+            ]
+        },
+    ];
+
+    // Create all rooms iteratively using upsert to avoid unique constraint errors
+    const seededRooms: any[] = [];
+    for (const data of roomsData) {
+        const { facilitiesIds, ...roomDetails } = data;
+
+        // Check if room exists first because roomNumber is not marked @unique in schema
+        let room = await prisma.room.findFirst({
+            where: { roomNumber: roomDetails.roomNumber }
+        });
+
+        if (room) {
+            room = await prisma.room.update({
+                where: { id: room.id },
+                data: {
+                    ...roomDetails,
+                    roomFacilities: {
+                        deleteMany: {},
+                        create: facilitiesIds.map(id => ({ facilityId: id }))
+                    }
+                }
+            });
+        } else {
+            room = await prisma.room.create({
+                data: {
+                    ...roomDetails,
+                    roomFacilities: {
+                        create: facilitiesIds.map(id => ({ facilityId: id }))
+                    }
+                }
+            });
         }
-    });
+        seededRooms.push(room);
+    }
+    const room1 = seededRooms.find(r => r.roomNumber === '101')!;
+    const room2 = seededRooms.find(r => r.roomNumber === '102')!;
+    const room3 = seededRooms.find(r => r.roomNumber === '201')!;
     console.log('✅ Rooms seeded');
 
     // 4. BOOKINGS
