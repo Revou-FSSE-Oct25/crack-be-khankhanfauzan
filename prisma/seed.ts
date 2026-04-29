@@ -109,6 +109,7 @@ async function main() {
     // 3. ROOMS
     const roomsData = [
         {
+            building: 'Emerald House',
             roomNumber: '101',
             floor: 1,
             roomType: RoomType.standard,
@@ -118,6 +119,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 1,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -129,6 +132,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '102',
             floor: 1,
             roomType: RoomType.standard,
@@ -138,6 +142,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 2,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -149,6 +155,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '103',
             floor: 1,
             roomType: RoomType.standard,
@@ -158,6 +165,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 3,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -169,6 +178,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '104',
             floor: 1,
             roomType: RoomType.standard,
@@ -178,6 +188,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 4,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -189,6 +201,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '105',
             floor: 1,
             roomType: RoomType.standard,
@@ -198,6 +211,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 5,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -209,6 +224,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '106',
             floor: 1,
             roomType: RoomType.standard,
@@ -218,6 +234,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 6,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -229,6 +247,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '107',
             floor: 1,
             roomType: RoomType.standard,
@@ -238,6 +257,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 2,
+            gridColumn: 1,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -249,6 +270,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '108',
             floor: 1,
             roomType: RoomType.standard,
@@ -258,6 +280,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 2,
+            gridColumn: 2,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -269,6 +293,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '109',
             floor: 1,
             roomType: RoomType.standard,
@@ -278,6 +303,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 2,
+            gridColumn: 3,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -289,6 +316,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '110',
             floor: 1,
             roomType: RoomType.standard,
@@ -298,6 +326,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 2,
+            gridColumn: 4,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -309,6 +339,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '111',
             floor: 1,
             roomType: RoomType.standard,
@@ -318,6 +349,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 2,
+            gridColumn: 5,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -329,6 +362,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '201',
             floor: 2,
             roomType: RoomType.standard,
@@ -338,6 +372,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 1,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -349,6 +385,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '202',
             floor: 2,
             roomType: RoomType.standard,
@@ -358,6 +395,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 2,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[2].id,
@@ -368,6 +407,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '203',
             floor: 2,
             roomType: RoomType.standard,
@@ -377,6 +417,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 3,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[2].id,
@@ -387,6 +429,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '204',
             floor: 2,
             roomType: RoomType.standard,
@@ -396,6 +439,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 4,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[2].id,
@@ -406,6 +451,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '205',
             floor: 2,
             roomType: RoomType.standard,
@@ -415,6 +461,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 5,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[2].id,
@@ -425,6 +473,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '206',
             floor: 2,
             roomType: RoomType.standard,
@@ -434,6 +483,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 6,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[2].id,
@@ -444,6 +495,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '207',
             floor: 2,
             roomType: RoomType.standard,
@@ -453,6 +505,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 2,
+            gridColumn: 1,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[2].id,
@@ -463,6 +517,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '208',
             floor: 2,
             roomType: RoomType.standard,
@@ -472,6 +527,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 2,
+            gridColumn: 2,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -483,6 +540,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '209',
             floor: 2,
             roomType: RoomType.standard,
@@ -492,6 +550,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 2,
+            gridColumn: 3,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[2].id,
@@ -502,6 +562,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '210',
             floor: 2,
             roomType: RoomType.standard,
@@ -511,6 +572,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 2,
+            gridColumn: 4,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[2].id,
@@ -521,6 +584,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald House',
             roomNumber: '211',
             floor: 2,
             roomType: RoomType.standard,
@@ -530,6 +594,8 @@ async function main() {
             width: 3.0,
             area: 12.0,
             unit: 'm',
+            gridRow: 2,
+            gridColumn: 5,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[2].id,
@@ -540,6 +606,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald Home Stay',
             roomNumber: 'S1',
             floor: 1,
             roomType: RoomType.studio,
@@ -549,6 +616,8 @@ async function main() {
             width: 3.5,
             area: 15.75,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 1,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -561,6 +630,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald Home Stay',
             roomNumber: 'S2',
             floor: 1,
             roomType: RoomType.studio,
@@ -570,6 +640,8 @@ async function main() {
             width: 3.5,
             area: 15.75,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 2,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
@@ -582,6 +654,7 @@ async function main() {
             ]
         },
         {
+            building: 'Emerald Home Stay',
             roomNumber: 'S3',
             floor: 1,
             roomType: RoomType.studio,
@@ -591,6 +664,8 @@ async function main() {
             width: 3.5,
             area: 15.75,
             unit: 'm',
+            gridRow: 1,
+            gridColumn: 3,
             facilitiesIds: [
                 facilities[0].id,
                 facilities[1].id,
