@@ -2,7 +2,43 @@
 
 Booking Management System for Boarding House (Kos-kosan).
 
-## Pagination & Filtering Documentation
+---
+
+## 🔄 Application Flow Process (Step-by-Step)
+
+Dokumentasi ini menjelaskan alur proses bisnis utama dari sistem manajemen booking Emerald House dari awal hingga akhir.
+
+### 1. Registrasi & Autentikasi (Authentication)
+- **Tenant Baru:** Calon penghuni (Tenant) mendaftar melalui endpoint `POST /auth/register`. Sistem otomatis memberikan role `tenant`.
+- **Login:** Tenant atau Admin masuk melalui `POST /auth/login`. Sistem mengembalikan JWT Access Token dan Refresh Token. Akses Token ini digunakan (di-set sebagai *Bearer Token*) untuk mengakses endpoint yang dilindungi (Protected Routes).
+
+### 2. Eksplorasi & Pemilihan Kamar (Room Browsing)
+- **Melihat Denah:** Frontend dapat memanggil `GET /rooms` dengan filter `building` (misal: "Emerald House"). Data yang dikembalikan mengandung koordinat `gridRow` dan `gridColumn` untuk me-render UI ala "kursi bioskop".
+- **Mengecek Ketersediaan:** Tenant memilih kamar dan tanggal masuk-keluar. Frontend memanggil `GET /rooms/:id/availability?startDate=...&endDate=...` untuk memastikan tidak ada *overlapping* (bentrok) jadwal dengan penghuni lain.
+
+### 3. Proses Booking (Reservation)
+- **Membuat Booking:** Jika tersedia, Tenant mengirimkan permintaan booking melalui `POST /bookings` dengan durasi sewa (harian, mingguan, bulanan, tahunan).
+- **Kalkulasi Harga:** Backend otomatis menghitung total harga berdasarkan tipe durasi (`rentType`) yang dipilih dan menyetel status booking menjadi `pending_payment`.
+
+### 4. Pembayaran & Verifikasi Admin (Payment & Approval)
+- **Upload Bukti Pembayaran (Mendatang):** Tenant melakukan pembayaran (transfer) dan mengunggah bukti bayar.
+- **Verifikasi Admin:** Admin melihat daftar booking yang berstatus `pending_payment` (`GET /bookings?status=pending_payment`).
+- **Approval/Reject:**
+  - Jika pembayaran valid, Admin memanggil `PATCH /bookings/:id/approve`. Status booking berubah menjadi `confirmed` dan status kamar terkait berubah menjadi `occupied`.
+  - Jika pembayaran tidak valid/ditolak, Admin memanggil `PATCH /bookings/:id/reject`. Status booking berubah menjadi `cancelled`.
+- **Auto-Cancel (Cron Job):** Jika Tenant tidak menyelesaikan pembayaran dalam waktu 24 jam, sistem Cron Job yang berjalan di *background* setiap jam akan membatalkan (cancel) booking tersebut secara otomatis.
+
+### 5. Masa Tinggal & Maintenance (Stay & Operations)
+- **Cek Status:** Selama masa sewa, Tenant dan Admin dapat melihat rincian kamar, tagihan bulan berikutnya (Invoices), dan riwayat pembayaran.
+- **Maintenance (Mendatang):** Jika ada kerusakan fasilitas (AC mati, dll), Tenant dapat melaporkan masalah ke sistem agar ditindaklanjuti oleh Admin.
+
+### 6. Checkout & Review
+- **Selesai Masa Sewa:** Saat durasi sewa berakhir, status booking dapat diselesaikan (`completed`) dan kamar kembali berstatus `available`.
+- **Ulasan (Review):** Tenant dapat memberikan rating dan ulasan (`POST /reviews`) terhadap kamar yang mereka tempati.
+
+---
+
+## 📄 Pagination & Filtering Documentation
 
 Sistem API menggunakan format respons yang terstandarisasi untuk semua endpoint yang mengembalikan daftar/list data (contohnya: Rooms, Bookings, Users, Facilities). Endpoint ini secara bawaan telah dilengkapi dengan fitur **Pagination** dan **Filtering**.
 
