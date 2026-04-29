@@ -17,7 +17,12 @@ import { AtGuard } from 'src/auth/guards/at.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiOkResponse,
+} from '@nestjs/swagger';
 
 @ApiTags('Bookings')
 @ApiBearerAuth()
@@ -37,7 +42,30 @@ export class BookingsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all bookings' })
+  @ApiOperation({ summary: 'Get all bookings with pagination and filtering' })
+  @ApiOkResponse({
+    description: 'Daftar transaksi booking',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'number', example: 200 },
+        message: { type: 'string', example: 'Bookings fetched' },
+        data: {
+          type: 'array',
+          items: { type: 'object' }, // Idealnya kita referensikan ke BookingDto
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            totalItems: { type: 'number', example: 100 },
+            page: { type: 'number', example: 1 },
+            perPage: { type: 'number', example: 10 },
+            totalPages: { type: 'number', example: 10 },
+          },
+        },
+      },
+    },
+  })
   findAll(@Query() query: GetBookingsQueryDto) {
     return this.bookingsService.findAll(query);
   }

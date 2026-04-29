@@ -1,98 +1,83 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Emerald House (RevoU CRACK Project) - Backend API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Booking Management System for Boarding House (Kos-kosan).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Pagination & Filtering Documentation
 
-## Description
+Sistem API menggunakan format respons yang terstandarisasi untuk semua endpoint yang mengembalikan daftar/list data (contohnya: Rooms, Bookings, Users, Facilities). Endpoint ini secara bawaan telah dilengkapi dengan fitur **Pagination** dan **Filtering**.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### 1. Struktur Respons Standar (Meta Data)
+Setiap endpoint list akan mengembalikan objek `meta` yang berisi informasi pagination:
 
-## Project setup
-
-```bash
-$ pnpm install
+```json
+{
+  "status": 200,
+  "message": "Data fetched successfully",
+  "data": [ ... ],
+  "meta": {
+    "totalItems": 100,  // Total keseluruhan data yang sesuai filter
+    "page": 1,          // Halaman saat ini
+    "perPage": 10,      // Jumlah data per halaman
+    "totalPages": 10    // Total keseluruhan halaman
+  }
+}
 ```
+*Note: Beberapa endpoint (seperti Rooms) mungkin mengembalikan properti `meta` tambahan seperti `totalRooms`, `totalAvailable`, dll.*
 
-## Compile and run the project
+### 2. Penggunaan Pagination Umum
+Parameter query berikut dapat digunakan di **semua** endpoint yang mendukung list:
+- `page` (number): Halaman yang ingin diakses (default: `1`)
+- `perPage` (number): Jumlah data yang ingin ditampilkan per halaman (default: `10`)
 
-```bash
-# development
-$ pnpm run start
+**Contoh:**
+`GET /api/v1/rooms?page=2&perPage=5`
 
-# watch mode
-$ pnpm run start:dev
+---
 
-# production mode
-$ pnpm run start:prod
-```
+### 3. Dokumentasi Endpoint Filtering & Pagination
 
-## Run tests
+#### A. Rooms (`GET /api/v1/rooms`)
+Digunakan untuk mendapatkan daftar kamar. Mendukung filter spesifik kamar.
+- **Query Parameters:**
+  - `floor` (number): Filter berdasarkan lantai (misal: `2`).
+  - `status` (string): Filter berdasarkan status ketersediaan (`available`, `unavailable`, `occupied`).
+  - `roomType` (string): Filter berdasarkan tipe kamar (`standard`, `deluxe`, dll).
+  - `price` (string): Mengurutkan berdasarkan harga bulanan (`asc` atau `desc`).
+- **Contoh Penggunaan:**
+  - Mendapatkan kamar di lantai 2 yang tersedia:
+    `GET /api/v1/rooms?floor=2&status=available&page=1&perPage=10`
+  - Mengurutkan semua kamar dari harga termurah:
+    `GET /api/v1/rooms?price=asc`
 
-```bash
-# unit tests
-$ pnpm run test
+#### B. Bookings (`GET /api/v1/bookings`)
+Digunakan untuk mendapatkan daftar transaksi booking (Membutuhkan Bearer Token - Admin/Tenant).
+- **Query Parameters:**
+  - `status` (string): Filter berdasarkan status transaksi (`pending_payment`, `confirmed`, `cancelled`, `completed`).
+  - `tenantId` (string/uuid): Filter transaksi milik tenant spesifik.
+  - `roomId` (string/uuid): Filter transaksi untuk kamar spesifik.
+- **Contoh Penggunaan:**
+  - Melihat semua transaksi yang belum dibayar di halaman 1:
+    `GET /api/v1/bookings?status=pending_payment&page=1&perPage=20`
 
-# e2e tests
-$ pnpm run test:e2e
+#### C. Users (`GET /api/v1/users`)
+Digunakan untuk mendapatkan daftar pengguna/tenant (Membutuhkan Bearer Token - Admin Only).
+- **Query Parameters:**
+  - `role` (string): Filter berdasarkan role (`admin` atau `tenant`).
+  - `search` (string): Mencari pengguna berdasarkan nama lengkap, nomor WhatsApp, atau email (case-insensitive).
+- **Contoh Penggunaan:**
+  - Mencari tenant dengan nama "Fauzan":
+    `GET /api/v1/users?role=tenant&search=Fauzan`
 
-# test coverage
-$ pnpm run test:cov
-```
+#### D. Facilities (`GET /api/v1/facilities`)
+Digunakan untuk mendapatkan daftar fasilitas yang tersedia.
+- **Query Parameters:**
+  - `name` (string): Pencarian nama fasilitas (case-insensitive).
+- **Contoh Penggunaan:**
+  - Mencari fasilitas yang mengandung kata "AC":
+    `GET /api/v1/facilities?name=AC&page=1&perPage=10`
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Swagger API Docs
+Semua dokumentasi lengkap, termasuk model DTO, validasi form, dan contoh respon dapat diakses melalui Swagger UI:
+👉 **`http://localhost:3001/api`** (Jika dijalankan secara lokal).

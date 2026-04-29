@@ -20,6 +20,7 @@ import {
   ApiQuery,
   ApiTags,
   getSchemaPath,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -56,6 +57,7 @@ export class RoomsController {
 
   @Public()
   @Get()
+  @ApiOperation({ summary: 'Get all rooms with pagination and filtering' })
   @ApiQuery({
     name: 'floor',
     required: false,

@@ -10,7 +10,12 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+} from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator';
 import { UsersService } from './users.service';
@@ -28,6 +33,29 @@ export class UsersController {
   @Get()
   @Roles('admin')
   @ApiOperation({ summary: 'Get all users with pagination and filtering' })
+  @ApiOkResponse({
+    description: 'Daftar pengguna (users/tenants)',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'number', example: 200 },
+        message: { type: 'string', example: 'Users fetched' },
+        data: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            totalItems: { type: 'number', example: 100 },
+            page: { type: 'number', example: 1 },
+            perPage: { type: 'number', example: 10 },
+            totalPages: { type: 'number', example: 10 },
+          },
+        },
+      },
+    },
+  })
   getAll(@Query() query: GetUsersQueryDto) {
     return this.usersService.findAll(query);
   }

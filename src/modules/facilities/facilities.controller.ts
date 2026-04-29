@@ -19,6 +19,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiOkResponse,
 } from '@nestjs/swagger';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -36,7 +37,30 @@ export class FacilitiesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all facilities' })
+  @ApiOperation({ summary: 'Get all facilities with pagination and filtering' })
+  @ApiOkResponse({
+    description: 'Daftar fasilitas',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'number', example: 200 },
+        message: { type: 'string', example: 'Facilities fetched' },
+        data: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            totalItems: { type: 'number', example: 100 },
+            page: { type: 'number', example: 1 },
+            perPage: { type: 'number', example: 10 },
+            totalPages: { type: 'number', example: 10 },
+          },
+        },
+      },
+    },
+  })
   findAll(@Query() query: GetFacilitiesQueryDto) {
     return this.facilitiesService.findAll(query);
   }
