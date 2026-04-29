@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { InvoicesRepository } from './invoices.repository';
 
 @Injectable()
 export class InvoicesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: InvoicesRepository) { }
 
   async findAll(currentUserId: string, currentUserRole: string) {
     const where: Prisma.InvoiceWhereInput = {};
@@ -13,15 +14,9 @@ export class InvoicesService {
       where.booking = { tenantId: currentUserId };
     }
 
-    const data = await this.prisma.invoice.findMany({
+    const data = await this.repository.findAll({
       where,
       orderBy: { createdAt: 'desc' },
-      include: {
-        booking: {
-          include: { room: true },
-        },
-        transactions: true,
-      },
     });
 
     return {
@@ -32,15 +27,7 @@ export class InvoicesService {
   }
 
   async findOne(id: string) {
-    const invoice = await this.prisma.invoice.findUnique({
-      where: { id },
-      include: {
-        booking: {
-          include: { room: true, tenant: true },
-        },
-        transactions: true,
-      },
-    });
+    const invoice = await this.repository.findById(id);
 
     if (!invoice) throw new NotFoundException('Invoice not found');
 
