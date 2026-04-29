@@ -131,7 +131,11 @@ export class BookingsService {
     }
   }
 
-  async findAll(query?: GetBookingsQueryDto): Promise<
+  async findAll(
+    currentUserId: string,
+    currentUserRole: string,
+    query?: GetBookingsQueryDto,
+  ): Promise<
     ApiListResponse<
       Booking,
       {
@@ -145,8 +149,17 @@ export class BookingsService {
     const { page = 1, perPage = 10, status, tenantId, roomId } = query || {};
 
     const where: Prisma.BookingWhereInput = {};
+
+    // Role-based access control for fetching bookings
+    if (currentUserRole === 'tenant') {
+      // Tenants can ONLY see their own bookings
+      where.tenantId = currentUserId;
+    } else {
+      // Admins can see all, or filter by specific tenantId
+      if (tenantId) where.tenantId = tenantId;
+    }
+
     if (status) where.status = status as BookingStatus;
-    if (tenantId) where.tenantId = tenantId;
     if (roomId) where.roomId = roomId;
 
     const [data, totalItems] = await Promise.all([

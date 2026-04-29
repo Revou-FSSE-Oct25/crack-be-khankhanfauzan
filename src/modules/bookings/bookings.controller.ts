@@ -29,7 +29,7 @@ import {
 @UseGuards(AtGuard, RolesGuard)
 @Controller('bookings')
 export class BookingsController {
-  constructor(private readonly bookingsService: BookingsService) {}
+  constructor(private readonly bookingsService: BookingsService) { }
 
   @Post()
   @Roles('tenant')
@@ -66,8 +66,12 @@ export class BookingsController {
       },
     },
   })
-  findAll(@Query() query: GetBookingsQueryDto) {
-    return this.bookingsService.findAll(query);
+  findAll(
+    @GetCurrentUser('sub') currentUserId: string,
+    @GetCurrentUser('role') currentUserRole: string,
+    @Query() query: GetBookingsQueryDto,
+  ) {
+    return this.bookingsService.findAll(currentUserId, currentUserRole, query);
   }
 
   @Get(':id')
