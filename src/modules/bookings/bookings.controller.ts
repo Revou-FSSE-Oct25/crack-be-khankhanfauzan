@@ -7,10 +7,12 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
+import { GetBookingsQueryDto } from './dto/get-bookings.dto';
 import { AtGuard } from 'src/auth/guards/at.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -36,8 +38,8 @@ export class BookingsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all bookings' })
-  findAll() {
-    return this.bookingsService.findAll();
+  findAll(@Query() query: GetBookingsQueryDto) {
+    return this.bookingsService.findAll(query);
   }
 
   @Get(':id')

@@ -1,7 +1,8 @@
 import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
-export class GetRoomsQueryDto {
+export class GetRoomsQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ description: 'Filter lantai', example: 2 })
   @IsOptional()
   @IsNumber()

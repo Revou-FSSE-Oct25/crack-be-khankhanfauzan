@@ -8,14 +8,16 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateUserAdminDto } from './dto/create-user-admin.dto';
 import { UpdateUserAdminDto } from './dto/update-user-admin.dto';
+import { GetUsersQueryDto } from './dto/get-users.dto';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -25,8 +27,9 @@ export class UsersController {
 
   @Get()
   @Roles('admin')
-  getAll() {
-    return this.usersService.findAll();
+  @ApiOperation({ summary: 'Get all users with pagination and filtering' })
+  getAll(@Query() query: GetUsersQueryDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get(':id')

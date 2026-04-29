@@ -28,14 +28,27 @@ export class RoomsRepository {
     });
   }
 
-  async findAll(): Promise<RoomWithFacilities[]> {
+  async findAll(params?: {
+    skip?: number;
+    take?: number;
+    where?: Prisma.RoomWhereInput;
+    orderBy?: Prisma.RoomOrderByWithRelationInput;
+  }): Promise<RoomWithFacilities[]> {
     return this.prisma.room.findMany({
+      skip: params?.skip,
+      take: params?.take,
+      where: params?.where,
+      orderBy: params?.orderBy,
       include: {
         roomFacilities: {
           include: { facility: true },
         },
       },
     });
+  }
+
+  async count(where?: Prisma.RoomWhereInput): Promise<number> {
+    return this.prisma.room.count({ where });
   }
 
   async findById(id: string): Promise<RoomWithFacilities | null> {

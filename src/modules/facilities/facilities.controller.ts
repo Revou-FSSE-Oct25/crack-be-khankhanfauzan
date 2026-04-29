@@ -7,10 +7,12 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { FacilitiesService } from './facilities.service';
 import { CreateFacilityDto } from './dto/create-facility.dto';
 import { UpdateFacilityDto } from './dto/update-facility.dto';
+import { GetFacilitiesQueryDto } from './dto/get-facilities.dto';
 import { AtGuard } from 'src/auth/guards/at.guard';
 import {
   ApiTags,
@@ -34,8 +36,9 @@ export class FacilitiesController {
   }
 
   @Get()
-  findAll() {
-    return this.facilitiesService.findAll();
+  @ApiOperation({ summary: 'Get all facilities' })
+  findAll(@Query() query: GetFacilitiesQueryDto) {
+    return this.facilitiesService.findAll(query);
   }
 
   @Get(':id')

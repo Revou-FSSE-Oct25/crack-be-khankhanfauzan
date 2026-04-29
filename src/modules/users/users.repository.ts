@@ -8,10 +8,23 @@ export type UserWithProfile = PrismaUser & { profile: Profile | null };
 export class UsersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<UserWithProfile[]> {
+  async findAll(params?: {
+    skip?: number;
+    take?: number;
+    where?: Prisma.UserWhereInput;
+    orderBy?: Prisma.UserOrderByWithRelationInput;
+  }): Promise<UserWithProfile[]> {
     return this.prisma.user.findMany({
+      skip: params?.skip,
+      take: params?.take,
+      where: params?.where,
+      orderBy: params?.orderBy,
       include: { profile: true },
     });
+  }
+
+  async count(where?: Prisma.UserWhereInput): Promise<number> {
+    return this.prisma.user.count({ where });
   }
 
   async findById(id: string): Promise<UserWithProfile | null> {

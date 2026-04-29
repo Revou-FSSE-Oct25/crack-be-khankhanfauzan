@@ -6,10 +6,12 @@ import {
 } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
+import { GetBookingsQueryDto } from './dto/get-bookings.dto';
 import { BookingsRepository } from './bookings.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { RentType, BookingStatus, Prisma } from '@prisma/client';
+import { RentType, BookingStatus, Prisma, Booking } from '@prisma/client';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import type { ApiListResponse } from 'src/types/api-response.interface';
 
 @Injectable()
 export class BookingsService {
@@ -99,8 +101,44 @@ export class BookingsService {
     };
   }
 
-  findAll() {
-    return this.repository.findAll();
+  async findAll(query?: GetBookingsQueryDto): Promise<
+    ApiListResponse<
+      Booking,
+      {
+        totalItems: number;
+        page: number;
+        perPage: number;
+        totalPages: number;
+      }
+    >
+  > {
+    const { page = 1, perPage = 10, status, tenantId, roomId } = query || {};
+
+    const where: Prisma.BookingWhereInput = {};
+    if (status) where.status = status as BookingStatus;
+    if (tenantId) where.tenantId = tenantId;
+    if (roomId) where.roomId = roomId;
+
+    const [data, totalItems] = await Promise.all([
+      this.repository.findAll({
+        skip: (page - 1) * perPage,
+        take: perPage,
+        where,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.repository.count(where),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / perPage);
+
+    const meta = {
+      totalItems,
+      page,
+      perPage,
+      totalPages,
+    };
+
+    return { status: 200, message: 'Bookings fetched', data, meta };
   }
 
   findOne(id: string) {

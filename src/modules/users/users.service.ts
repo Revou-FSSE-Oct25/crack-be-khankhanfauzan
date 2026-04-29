@@ -4,17 +4,69 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { User, Role } from 'src/types/user.type';
 import { CreateUserAdminDto } from './dto/create-user-admin.dto';
 import { UpdateUserAdminDto } from './dto/update-user-admin.dto';
-import type { ApiResponse } from 'src/types/api-response.interface';
-import { RoleType, MaritalStatus } from '@prisma/client';
+import { GetUsersQueryDto } from './dto/get-users.dto';
+import type {
+  ApiResponse,
+  ApiListResponse,
+} from 'src/types/api-response.interface';
+import { RoleType, MaritalStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly repository: UsersRepository) {}
 
-  async findAll(): Promise<ApiResponse<User[]>> {
-    const list = await this.repository.findAll();
+  async findAll(query?: GetUsersQueryDto): Promise<
+    ApiListResponse<
+      User,
+      {
+        totalItems: number;
+        page: number;
+        perPage: number;
+        totalPages: number;
+      }
+    >
+  > {
+    const { page = 1, perPage = 10, role, search } = query || {};
+
+    const where: Prisma.UserWhereInput = {};
+    if (role) {
+      where.role = role as RoleType;
+    }
+    if (search) {
+      where.OR = [
+        { email: { contains: search, mode: 'insensitive' } },
+        {
+          profile: {
+            OR: [
+              { fullName: { contains: search, mode: 'insensitive' } },
+              { whatsappNumber: { contains: search, mode: 'insensitive' } },
+            ],
+          },
+        },
+      ];
+    }
+
+    const [list, totalItems] = await Promise.all([
+      this.repository.findAll({
+        skip: (page - 1) * perPage,
+        take: perPage,
+        where,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.repository.count(where),
+    ]);
+
     const data = list.map((u) => this.mapToUser(u));
-    return { status: 200, message: 'Users fetched', data };
+    const totalPages = Math.ceil(totalItems / perPage);
+
+    const meta = {
+      totalItems,
+      page,
+      perPage,
+      totalPages,
+    };
+
+    return { status: 200, message: 'Users fetched', data, meta };
   }
 
   async findOne(id: string): Promise<ApiResponse<User>> {

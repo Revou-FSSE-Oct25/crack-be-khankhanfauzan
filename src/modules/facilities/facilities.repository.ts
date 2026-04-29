@@ -14,8 +14,22 @@ export class FacilitiesRepository {
     return this.prisma.facility.findUnique({ where: { name } });
   }
 
-  async findAll(): Promise<Facility[]> {
-    return this.prisma.facility.findMany();
+  async findAll(params?: {
+    skip?: number;
+    take?: number;
+    where?: Prisma.FacilityWhereInput;
+    orderBy?: Prisma.FacilityOrderByWithRelationInput;
+  }): Promise<Facility[]> {
+    return this.prisma.facility.findMany({
+      skip: params?.skip,
+      take: params?.take,
+      where: params?.where,
+      orderBy: params?.orderBy,
+    });
+  }
+
+  async count(where?: Prisma.FacilityWhereInput): Promise<number> {
+    return this.prisma.facility.count({ where });
   }
 
   async findById(id: string): Promise<Facility | null> {

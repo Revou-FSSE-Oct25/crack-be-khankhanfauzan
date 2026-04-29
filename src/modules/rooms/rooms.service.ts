@@ -8,7 +8,7 @@ import type {
   ApiResponse,
 } from 'src/types/api-response.interface';
 import type { Room } from 'src/types/room.type';
-import { RoomStatus, RoomType, BookingStatus } from '@prisma/client';
+import { RoomStatus, RoomType, BookingStatus, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -43,11 +43,14 @@ export class RoomsService {
     return { status: 201, message: 'Room created', data: roomData };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async findAll(query?: GetRoomsQueryDto): Promise<
     ApiListResponse<
       Room,
       {
+        totalItems: number;
+        page: number;
+        perPage: number;
+        totalPages: number;
         totalRooms: number;
         totalAvailable: number;
         totalUnavailable: number;
@@ -55,18 +58,47 @@ export class RoomsService {
       }
     >
   > {
-    const list = await this.repository.findAll();
+    const {
+      page = 1,
+      perPage = 10,
+      floor,
+      status,
+      roomType,
+      price,
+    } = query || {};
+
+    const where: Prisma.RoomWhereInput = {};
+    if (floor) where.floor = floor;
+    if (status) where.status = status as RoomStatus;
+    if (roomType) where.roomType = roomType as RoomType;
+
+    const orderBy: Prisma.RoomOrderByWithRelationInput = price
+      ? { priceMonthly: price }
+      : { createdAt: 'desc' };
+
+    const [list, totalItems, totalAvailable, totalUnavailable, totalOccupied] =
+      await Promise.all([
+        this.repository.findAll({
+          skip: (page - 1) * perPage,
+          take: perPage,
+          where,
+          orderBy,
+        }),
+        this.repository.count(where),
+        this.repository.count({ status: 'available' }),
+        this.repository.count({ status: 'unavailable' }),
+        this.repository.count({ status: 'occupied' }),
+      ]);
 
     const data = list.map((r) => this.mapToRoom(r));
+    const totalPages = Math.ceil(totalItems / perPage);
 
-    const totalRooms = data.length;
-    const totalAvailable = data.filter((r) => r.status === 'available').length;
-    const totalUnavailable = data.filter(
-      (r) => r.status === 'unavailable',
-    ).length;
-    const totalOccupied = data.filter((r) => r.status === 'occupied').length;
     const meta = {
-      totalRooms,
+      totalItems,
+      page,
+      perPage,
+      totalPages,
+      totalRooms: totalAvailable + totalUnavailable + totalOccupied,
       totalAvailable,
       totalUnavailable,
       totalOccupied,

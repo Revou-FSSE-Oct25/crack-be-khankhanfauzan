@@ -8,8 +8,26 @@ export class BookingsRepository {
     return this.prisma.booking.create({ data });
   }
 
-  async findAll(): Promise<Booking[]> {
-    return this.prisma.booking.findMany();
+  async findAll(params?: {
+    skip?: number;
+    take?: number;
+    where?: Prisma.BookingWhereInput;
+    orderBy?: Prisma.BookingOrderByWithRelationInput;
+  }): Promise<Booking[]> {
+    return this.prisma.booking.findMany({
+      skip: params?.skip,
+      take: params?.take,
+      where: params?.where,
+      orderBy: params?.orderBy,
+      include: {
+        room: true,
+        tenant: true,
+      },
+    });
+  }
+
+  async count(where?: Prisma.BookingWhereInput): Promise<number> {
+    return this.prisma.booking.count({ where });
   }
 
   async findById(id: string): Promise<Booking | null> {

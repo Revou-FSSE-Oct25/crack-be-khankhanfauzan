@@ -94,6 +94,10 @@ export class RoomsController {
         meta: {
           type: 'object',
           properties: {
+            totalItems: { type: 'number', example: 100 },
+            page: { type: 'number', example: 1 },
+            perPage: { type: 'number', example: 10 },
+            totalPages: { type: 'number', example: 10 },
             totalRooms: { type: 'number', example: 22 },
             totalAvailable: { type: 'number', example: 14 },
             totalUnavailable: { type: 'number', example: 2 },

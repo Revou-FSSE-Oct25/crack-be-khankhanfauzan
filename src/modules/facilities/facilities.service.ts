@@ -5,7 +5,10 @@ import {
 } from '@nestjs/common';
 import { CreateFacilityDto } from './dto/create-facility.dto';
 import { UpdateFacilityDto } from './dto/update-facility.dto';
+import { GetFacilitiesQueryDto } from './dto/get-facilities.dto';
 import { FacilitiesRepository } from './facilities.repository';
+import type { ApiListResponse } from 'src/types/api-response.interface';
+import { Prisma, Facility } from '@prisma/client';
 
 @Injectable()
 export class FacilitiesService {
@@ -29,13 +32,44 @@ export class FacilitiesService {
     };
   }
 
-  async findAll() {
-    const facilities = await this.repository.findAll();
-    return {
-      status: 200,
-      message: 'List of all facilities',
-      data: facilities,
+  async findAll(query?: GetFacilitiesQueryDto): Promise<
+    ApiListResponse<
+      Facility,
+      {
+        totalItems: number;
+        page: number;
+        perPage: number;
+        totalPages: number;
+      }
+    >
+  > {
+    const { page = 1, perPage = 10, name } = query || {};
+
+    const where: Prisma.FacilityWhereInput = {};
+    if (name) {
+      where.name = { contains: name, mode: 'insensitive' };
+    }
+
+    const [data, totalItems] = await Promise.all([
+      this.repository.findAll({
+        skip: (page - 1) * perPage,
+        take: perPage,
+        where,
+        orderBy: { name: 'asc' },
+      }),
+      this.repository.count(where),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / perPage);
+
+    const meta = {
+      totalItems,
+      page,
+      perPage,
+      totalPages,
     };
+
+    return { status: 200, message: 'Facilities fetched', data, meta };
   }
 
   async findOne(id: string) {
