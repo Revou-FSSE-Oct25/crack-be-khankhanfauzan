@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
@@ -20,85 +21,114 @@ export class BookingsService {
   constructor(
     private readonly repository: BookingsRepository,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   async create(tenantId: string, dto: CreateBookingDto) {
-    const { roomId, rentType, duration, startDate } = dto;
+    try {
+      const { roomId, rentType, duration, startDate } = dto;
 
-    // 1. Validate Room
-    const room = await this.prisma.room.findUnique({ where: { id: roomId } });
-    if (!room) {
-      throw new NotFoundException('Room not found');
-    }
+      // 1. Validate Room
+      const room = await this.prisma.room.findUnique({ where: { id: roomId } });
+      if (!room) {
+        throw new NotFoundException('Room not found');
+      }
 
-    // 2. Calculate End Date
-    const start = new Date(startDate);
-    const end = new Date(start);
-    if (rentType === RentType.daily) end.setDate(end.getDate() + duration);
-    if (rentType === RentType.weekly) end.setDate(end.getDate() + duration * 7);
-    if (rentType === RentType.monthly) end.setMonth(end.getMonth() + duration);
-    if (rentType === RentType.yearly)
-      end.setFullYear(end.getFullYear() + duration);
+      if (room.status !== 'available') {
+        throw new BadRequestException(
+          `Cannot book this room because its status is ${room.status}`,
+        );
+      }
 
-    // 3. Check Availability (Prevent Double Booking)
-    // Check if there are any overlapping bookings that are NOT cancelled
-    const overlappingBookings = await this.prisma.booking.findFirst({
-      where: {
-        roomId,
-        status: { not: BookingStatus.cancelled },
-        AND: [{ startDate: { lt: end } }, { endDate: { gt: start } }],
-      },
-    });
+      // 2. Calculate End Date
+      const start = new Date(startDate);
+      const end = new Date(start);
+      if (rentType === RentType.daily) end.setDate(end.getDate() + duration);
+      if (rentType === RentType.weekly)
+        end.setDate(end.getDate() + duration * 7);
+      if (rentType === RentType.monthly)
+        end.setMonth(end.getMonth() + duration);
+      if (rentType === RentType.yearly)
+        end.setFullYear(end.getFullYear() + duration);
 
-    if (overlappingBookings) {
-      throw new BadRequestException(
-        'Room is already booked for the selected dates',
+      // 3. Check Availability (Prevent Double Booking)
+      const overlappingBookings = await this.prisma.booking.findFirst({
+        where: {
+          roomId,
+          status: { not: BookingStatus.cancelled },
+          AND: [{ startDate: { lt: end } }, { endDate: { gt: start } }],
+        },
+      });
+
+      if (overlappingBookings) {
+        throw new BadRequestException(
+          'Room is already booked for the selected dates',
+        );
+      }
+
+      // 4. Calculate Price
+      let pricePerUnit: Prisma.Decimal = new Prisma.Decimal(0);
+      if (rentType === RentType.daily) {
+        if (!room.priceDaily)
+          throw new BadRequestException(
+            'Daily rent is not available for this room',
+          );
+        pricePerUnit = room.priceDaily;
+      } else if (rentType === RentType.weekly) {
+        if (!room.priceWeekly)
+          throw new BadRequestException(
+            'Weekly rent is not available for this room',
+          );
+        pricePerUnit = room.priceWeekly;
+      } else if (rentType === RentType.monthly) {
+        if (!room.priceMonthly)
+          throw new BadRequestException(
+            'Monthly rent is not available for this room',
+          );
+        pricePerUnit = room.priceMonthly;
+      } else if (rentType === RentType.yearly) {
+        if (!room.priceMonthly)
+          throw new BadRequestException(
+            'Yearly rent is not available for this room',
+          );
+        pricePerUnit = new Prisma.Decimal(Number(room.priceMonthly) * 12);
+      } else {
+        throw new BadRequestException('Invalid rent type');
+      }
+
+      const totalPrice = new Prisma.Decimal(Number(pricePerUnit) * duration);
+
+      // 5. Create Booking
+      const booking = await this.repository.create({
+        tenant: { connect: { id: tenantId } },
+        room: { connect: { id: roomId } },
+        rentType,
+        duration,
+        startDate: start,
+        endDate: end,
+        pricePerUnit,
+        totalPrice,
+        status: BookingStatus.pending_payment,
+      });
+
+      return {
+        status: 201,
+        message: 'Booking created successfully',
+        data: booking,
+      };
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+
+      // Log the actual error for debugging internal server errors
+      console.error('[BookingsService.create] Error:', error);
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : 'Failed to create booking',
       );
     }
-
-    // 4. Calculate Price
-    let pricePerUnit: Prisma.Decimal = new Prisma.Decimal(0);
-    if (rentType === RentType.daily) {
-      if (!room.priceDaily)
-        throw new BadRequestException(
-          'Daily rent is not available for this room',
-        );
-      pricePerUnit = room.priceDaily;
-    } else if (rentType === RentType.weekly) {
-      if (!room.priceWeekly)
-        throw new BadRequestException(
-          'Weekly rent is not available for this room',
-        );
-      pricePerUnit = room.priceWeekly;
-    } else if (rentType === RentType.monthly) {
-      pricePerUnit = room.priceMonthly;
-    } else if (rentType === RentType.yearly) {
-      // Assuming yearly price is 12 * monthly price since there's no priceYearly field
-      pricePerUnit = new Prisma.Decimal(Number(room.priceMonthly) * 12);
-    } else {
-      throw new BadRequestException('Invalid rent type');
-    }
-
-    const totalPrice = new Prisma.Decimal(Number(pricePerUnit) * duration);
-
-    // 5. Create Booking
-    const booking = await this.repository.create({
-      tenant: { connect: { id: tenantId } },
-      room: { connect: { id: roomId } },
-      rentType,
-      duration,
-      startDate: start,
-      endDate: end,
-      pricePerUnit,
-      totalPrice,
-      status: BookingStatus.pending_payment,
-    });
-
-    return {
-      status: 201,
-      message: 'Booking created successfully',
-      data: booking,
-    };
   }
 
   async findAll(query?: GetBookingsQueryDto): Promise<

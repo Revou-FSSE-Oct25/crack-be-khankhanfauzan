@@ -16,7 +16,7 @@ export class RoomsService {
   constructor(
     private readonly repository: RoomsRepository,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   async create(createRoomDto: CreateRoomDto): Promise<ApiResponse<Room>> {
     const data = await this.repository.create({
@@ -123,6 +123,14 @@ export class RoomsService {
     const room = await this.repository.findById(roomId);
     if (!room) {
       throw new NotFoundException('Room not found');
+    }
+
+    if (room.status !== 'available') {
+      return {
+        status: 200,
+        message: `Room is currently ${room.status} and cannot be booked`,
+        data: { isAvailable: false },
+      };
     }
 
     const start = new Date(startDate);
