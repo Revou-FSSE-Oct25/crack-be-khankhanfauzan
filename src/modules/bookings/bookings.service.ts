@@ -262,11 +262,94 @@ export class BookingsService {
     }
   }
 
-  update(id: string, updateBookingDto: UpdateBookingDto) {
-    return this.repository.update(
-      id,
-      updateBookingDto as Prisma.BookingUpdateInput,
-    );
+  async update(id: string, updateBookingDto: UpdateBookingDto) {
+    const existing = await this.repository.findById(id);
+    if (!existing) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    const roomId = updateBookingDto.roomId || existing.roomId;
+    const rentType = updateBookingDto.rentType || existing.rentType;
+    const duration = updateBookingDto.duration || existing.duration;
+    const startDate = updateBookingDto.startDate || existing.startDate;
+
+    // 1. Validate Room
+    const room = await this.prisma.room.findUnique({ where: { id: roomId } });
+    if (!room) {
+      throw new NotFoundException('Room not found');
+    }
+
+    // Check if room status is available ONLY IF we are changing the room
+    if (roomId !== existing.roomId && room.status !== 'available') {
+      throw new BadRequestException(
+        `Cannot change to this room because its status is ${room.status}`,
+      );
+    }
+
+    // 2. Calculate New End Date
+    const start = new Date(startDate);
+    const end = new Date(start);
+    if (rentType === RentType.daily) end.setDate(end.getDate() + duration);
+    if (rentType === RentType.weekly) end.setDate(end.getDate() + duration * 7);
+    if (rentType === RentType.monthly) end.setMonth(end.getMonth() + duration);
+    if (rentType === RentType.yearly) end.setFullYear(end.getFullYear() + duration);
+
+    // 3. Check Availability (Prevent Double Booking)
+    // We must exclude the CURRENT booking ID from the check
+    const overlappingBookings = await this.prisma.booking.findFirst({
+      where: {
+        roomId,
+        id: { not: id }, // Exclude self
+        status: { not: BookingStatus.cancelled },
+        AND: [{ startDate: { lt: end } }, { endDate: { gt: start } }],
+      },
+    });
+
+    if (overlappingBookings) {
+      throw new BadRequestException(
+        'Room is already booked for the new selected dates/room',
+      );
+    }
+
+    // 4. Calculate New Price
+    let pricePerUnit: Prisma.Decimal = new Prisma.Decimal(0);
+    if (rentType === RentType.daily) {
+      if (!room.priceDaily)
+        throw new BadRequestException('Daily rent is not available for this room');
+      pricePerUnit = room.priceDaily;
+    } else if (rentType === RentType.weekly) {
+      if (!room.priceWeekly)
+        throw new BadRequestException('Weekly rent is not available for this room');
+      pricePerUnit = room.priceWeekly;
+    } else if (rentType === RentType.monthly) {
+      if (!room.priceMonthly)
+        throw new BadRequestException('Monthly rent is not available for this room');
+      pricePerUnit = room.priceMonthly;
+    } else if (rentType === RentType.yearly) {
+      if (!room.priceMonthly)
+        throw new BadRequestException('Yearly rent is not available for this room');
+      pricePerUnit = new Prisma.Decimal(Number(room.priceMonthly) * 12);
+    }
+
+    const totalPrice = new Prisma.Decimal(Number(pricePerUnit) * duration);
+
+    // 5. Build Update Data
+    const dataToUpdate: Prisma.BookingUpdateInput = {
+      ...(updateBookingDto.roomId && { room: { connect: { id: updateBookingDto.roomId } } }),
+      ...(updateBookingDto.rentType && { rentType: updateBookingDto.rentType }),
+      ...(updateBookingDto.duration && { duration: updateBookingDto.duration }),
+      ...(updateBookingDto.startDate && { startDate: start }),
+      endDate: end,
+      pricePerUnit,
+      totalPrice,
+    };
+
+    const updated = await this.repository.update(id, dataToUpdate);
+    return {
+      status: 200,
+      message: 'Booking updated successfully',
+      data: updated,
+    };
   }
 
   remove(id: string) {
