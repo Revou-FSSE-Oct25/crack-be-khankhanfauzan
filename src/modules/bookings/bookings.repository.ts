@@ -1,8 +1,10 @@
+import { Injectable } from '@nestjs/common';
 import { Booking, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
+@Injectable()
 export class BookingsRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(data: Prisma.BookingCreateInput): Promise<Booking> {
     return this.prisma.booking.create({ data });

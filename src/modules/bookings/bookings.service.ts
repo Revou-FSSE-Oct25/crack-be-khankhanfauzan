@@ -12,7 +12,7 @@ import { BookingsRepository } from './bookings.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RentType, BookingStatus, Prisma, Booking } from '@prisma/client';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import type { ApiListResponse } from 'src/types/api-response.interface';
+import type { ApiListResponse, ApiResponse } from 'src/types/api-response.interface';
 
 @Injectable()
 export class BookingsService {
@@ -352,7 +352,17 @@ export class BookingsService {
     };
   }
 
-  remove(id: string) {
-    return this.repository.remove(id);
+  async remove(id: string): Promise<ApiResponse<null>> {
+    const existing = await this.repository.findById(id);
+
+    if (!existing) {
+      throw new NotFoundException(`Booking not found`);
+    }
+
+    await this.repository.remove(id);
+
+    return {
+      status: 200, message: 'Booking deleted', data: null,
+    };
   }
 }
