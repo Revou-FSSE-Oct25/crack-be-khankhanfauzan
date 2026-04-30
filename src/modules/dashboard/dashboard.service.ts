@@ -1,25 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { BookingStatus, ComplaintStatus, InvoiceStatus } from '@prisma/client';
+import { DashboardRepository } from './dashboard.repository';
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly repository: DashboardRepository) { }
 
   async getTenantDashboard(tenantId: string) {
     // 1. Get Active Booking
-    const activeBooking = await this.prisma.booking.findFirst({
-      where: {
-        tenantId,
-        status: { in: [BookingStatus.pending_payment, BookingStatus.confirmed] }
-      },
-      include: {
-        room: {
-          include: { roomFacilities: { include: { facility: true } } }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+    const activeBooking = await this.repository.findActiveBookingByTenantId(tenantId);
 
     if (!activeBooking) {
       return {
@@ -49,13 +37,7 @@ export class DashboardService {
     };
 
     // 3. Payment Reminder
-    const nextInvoice = await this.prisma.invoice.findFirst({
-      where: {
-        bookingId: activeBooking.id,
-        status: InvoiceStatus.unpaid
-      },
-      orderBy: { dueDate: 'asc' }
-    });
+    const nextInvoice = await this.repository.findNextUnpaidInvoice(activeBooking.id);
 
     let paymentReminder: {
       invoiceId: string;
@@ -77,26 +59,10 @@ export class DashboardService {
     }
 
     // 4. Active Complaints
-    const activeComplaints = await this.prisma.maintenance.findMany({
-      where: {
-        tenantId,
-        status: { in: [ComplaintStatus.open, ComplaintStatus.in_progress] }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+    const activeComplaints = await this.repository.findActiveComplaintsByTenantId(tenantId);
 
     // 5. Last Transaction
-    const lastTransaction = await this.prisma.transaction.findFirst({
-      where: {
-        invoice: {
-          booking: {
-            tenantId
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-      include: { invoice: true }
-    });
+    const lastTransaction = await this.repository.findLastTransactionByTenantId(tenantId);
 
     // 6. Calendar Events
     const calendarEvents: any[] = [];
