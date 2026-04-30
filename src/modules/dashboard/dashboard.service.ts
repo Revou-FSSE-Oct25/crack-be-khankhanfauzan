@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { BookingStatus, ComplaintStatus, InvoiceStatus, TransactionStatus } from '@prisma/client';
+import { BookingStatus, ComplaintStatus, InvoiceStatus } from '@prisma/client';
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async getTenantDashboard(tenantId: string) {
     // 1. Get Active Booking
@@ -57,7 +57,12 @@ export class DashboardService {
       orderBy: { dueDate: 'asc' }
     });
 
-    let paymentReminder = null;
+    let paymentReminder: {
+      invoiceId: string;
+      dueDate: Date;
+      totalAmount: number;
+      countdownDays: number;
+    } | null = null;
     if (nextInvoice) {
       const dueDate = new Date(nextInvoice.dueDate);
       const diffDue = dueDate.getTime() - now.getTime();
@@ -94,8 +99,8 @@ export class DashboardService {
     });
 
     // 6. Calendar Events
-    const calendarEvents = [];
-    
+    const calendarEvents: any[] = [];
+
     // Add Due Dates to Calendar
     if (nextInvoice) {
       calendarEvents.push({
@@ -104,7 +109,7 @@ export class DashboardService {
         date: nextInvoice.dueDate,
         amount: Number(nextInvoice.totalAmount)
       });
-      
+
       // H-3 Reminder
       const h3Date = new Date(nextInvoice.dueDate);
       h3Date.setDate(h3Date.getDate() - 3);
