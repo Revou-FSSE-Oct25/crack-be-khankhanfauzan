@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UsersRepository, UserWithProfile } from './users.repository';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { User, Role } from 'src/types/user.type';
@@ -13,7 +13,7 @@ import { RoleType, MaritalStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly repository: UsersRepository) {}
+  constructor(private readonly repository: UsersRepository) { }
 
   async findAll(query?: GetUsersQueryDto): Promise<
     ApiListResponse<
@@ -154,11 +154,35 @@ export class UsersService {
   async updateProfile(
     id: string,
     dto: UpdateProfileDto,
+    files?: {
+      avatar?: Express.Multer.File[];
+      ktp?: Express.Multer.File[];
+      marriage?: Express.Multer.File[];
+    },
   ): Promise<ApiResponse<User>> {
     const current = await this.repository.findById(id);
     if (!current) {
       throw new NotFoundException('User not found');
     }
+
+    // Check whether the new status is married, or the old status was married and has not been changed
+    const isNowMarried = dto.maritalStatus === 'married' || (!dto.maritalStatus && current.profile?.maritalStatus === 'married');
+
+    if (isNowMarried) {
+      const hastExistingMarriageCertificate = !!current.profile?.fotoBukuNikahUrl;
+      const isUploadingNewMarriageCertificate = !!files?.marriage?.[0];
+
+      // if user doesn't jave a marriage certificate photo in DB yet, and is NOT Uploading one now, reject!
+      if (!hastExistingMarriageCertificate && !isUploadingNewMarriageCertificate) {
+        throw new BadRequestException('Marriage Certificate photo must be uploaded if the status is married')
+      }
+    }
+
+    // Extract URLs safely if the files were uploaded in this request
+    const avatarUrl = files?.avatar?.[0] ? `/uploads/profiles/${files.avatar[0].filename}` : undefined;
+    const ktpUrl = files?.ktp?.[0] ? `/uploads/profiles/${files.ktp[0].filename}` : undefined;
+    const marriageUrl = files?.marriage?.[0] ? `/uploads/profiles/${files.marriage[0].filename}` : undefined;
+
 
     const updated = await this.repository.update(id, {
       profile: {
@@ -167,9 +191,9 @@ export class UsersService {
             fullName: dto.fullName,
             whatsappNumber: dto.whatsappNumber,
             maritalStatus: dto.maritalStatus as MaritalStatus,
-            fotoProfileUrl: dto.avatarUrl,
-            fotoKtpUrl: dto.ktpUrl,
-            fotoBukuNikahUrl: dto.marriageUrl,
+            fotoProfileUrl: avatarUrl,
+            fotoKtpUrl: ktpUrl,
+            fotoBukuNikahUrl: marriageUrl,
           },
           update: {
             ...(dto.fullName && { fullName: dto.fullName }),
@@ -177,10 +201,10 @@ export class UsersService {
             ...(dto.maritalStatus && {
               maritalStatus: dto.maritalStatus as MaritalStatus,
             }),
-            ...(dto.avatarUrl && { fotoProfileUrl: dto.avatarUrl }),
-            ...(dto.ktpUrl && { fotoKtpUrl: dto.ktpUrl }),
-            ...(dto.marriageUrl !== undefined && {
-              fotoBukuNikahUrl: dto.marriageUrl,
+            ...(avatarUrl && { fotoProfileUrl: avatarUrl }),
+            ...(ktpUrl && { fotoKtpUrl: ktpUrl }),
+            ...(marriageUrl !== undefined && {
+              fotoBukuNikahUrl: marriageUrl,
             }),
           },
         },

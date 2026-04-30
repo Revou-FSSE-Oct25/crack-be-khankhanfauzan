@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -9,12 +10,15 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiTags,
   ApiOperation,
   ApiOkResponse,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator';
@@ -23,12 +27,15 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateUserAdminDto } from './dto/create-user-admin.dto';
 import { UpdateUserAdminDto } from './dto/update-user-admin.dto';
 import { GetUsersQueryDto } from './dto/get-users.dto';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 @ApiTags('users')
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get()
   @Roles('admin')
@@ -78,16 +85,43 @@ export class UsersController {
   }
 
   @Patch(':id/profile')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'avatar', maxCount: 1 },
+      { name: 'ktp', maxCount: 1 },
+      { name: 'marriage', maxCount: 1 }
+    ], {
+      storage: diskStorage({
+        destination: './uploads/profiles',
+        filename: (req, file, cb) => {
+          const randomName = Array(32).fill(null).map(() => Math.round(Math.random() * 16).toString()).join('');
+          cb(null, `${randomName}${extname(file.originalname)}`);
+        }
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+          return cb(new BadRequestException(`Only image files are allowed for ${file.fieldname}!`), false);
+        }
+        cb(null, true);
+      },
+    })
+  )
   updateProfile(
     @Param('id') id: string,
     @Body() dto: UpdateProfileDto,
+    @UploadedFiles() files: {
+      avatar?: Express.Multer.File[];
+      ktp?: Express.Multer.File[];
+      marriage?: Express.Multer.File[];
+    },
     @GetCurrentUser('role') role: string,
     @GetCurrentUser('sub') userId: string,
   ) {
     if (role !== 'admin' && userId !== id) {
       return { status: 403, message: 'Forbidden', data: null };
     }
-    return this.usersService.updateProfile(id, dto);
+    return this.usersService.updateProfile(id, dto, files);
   }
 
   @Delete(':id')

@@ -15,23 +15,20 @@ export class UpdateProfileDto {
   @IsString()
   whatsappNumber?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  avatarUrl?: string | null;
-
   @ApiPropertyOptional({ enum: ['single', 'married'] })
   @IsOptional()
   @IsEnum(['single', 'married'] as unknown as MaritalStatus[])
   maritalStatus?: MaritalStatus;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'File Foto Profile' })
   @IsOptional()
-  @IsString()
-  ktpUrl?: string | null;
+  fotoProfileUrl?: any;
 
-  @ApiPropertyOptional()
-  @ValidateIf(requireMarriage)
-  @IsString()
-  marriageUrl?: string | null;
+  @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'File Foto KTP' })
+  @IsOptional()
+  fotoKtpUrl?: any;
+
+  @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'File Foto Buku Nikah' })
+  @IsOptional()
+  fotoBukuNikahUrl?: any;
 }
