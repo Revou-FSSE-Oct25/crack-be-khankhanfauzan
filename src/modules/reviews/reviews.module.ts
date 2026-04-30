@@ -8,5 +8,6 @@ import { BookingsModule } from '../bookings/bookings.module';
   imports: [BookingsModule],
   controllers: [ReviewsController],
   providers: [ReviewsService, ReviewsRepository],
+  exports: [ReviewsService, ReviewsRepository],
 })
 export class ReviewsModule { }
