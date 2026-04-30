@@ -25,6 +25,18 @@ export class BookingsService {
 
   async create(tenantId: string, dto: CreateBookingDto) {
     try {
+      // 0. Validate 1 Tenant 1 Active Booking limit
+      const existingActiveBooking = await this.prisma.booking.findFirst({
+        where: {
+          tenantId,
+          status: { in: [BookingStatus.pending_payment, BookingStatus.confirmed] },
+        },
+      });
+
+      if (existingActiveBooking) {
+        throw new BadRequestException('You already have an active booking. Only 1 active booking per tenant is allowed.');
+      }
+
       const { roomId, rentType, duration, startDate } = dto;
 
       // 1. Validate Room

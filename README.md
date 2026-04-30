@@ -212,3 +212,25 @@ Sistem untuk tenant memberikan ulasan dan penilaian terhadap kamar setelah seles
   - **Filter yang didukung:** `roomId`, `tenantId`.
   - **Contoh Penggunaan:**
     `GET /reviews?roomId=uuid-kamar-123&page=1&perPage=5`
+
+---
+
+## 📊 Phase 4: Tenant Dashboard
+
+Sistem menyediakan endpoint khusus untuk halaman _Home/Dashboard_ aplikasi _Frontend_ Tenant. Sesuai skenario dunia nyata, **Satu Tenant hanya diperbolehkan memiliki maksimal satu Booking yang sedang aktif** (1 tenant = 1 room).
+
+### 1. Tenant Dashboard API
+
+Endpoint yang memuat seluruh rangkuman info (agregasi) yang dibutuhkan Tenant pada Home Page mereka.
+
+- **Endpoint:** `GET /dashboard/tenant`
+- **Response Data yang Disediakan:**
+  - `activeBooking`: Detail lengkap kamar yang saat ini disewa beserta fasilitasnya.
+  - `stayInfo`: Menghitung _real-time_ berapa hari tenant sudah tinggal dan total durasi kontrak/sewa.
+  - `paymentReminder`: Mengecek tagihan (_Invoice_) terdekat yang belum dibayar, menampilkan tanggal jatuh tempo, total tagihan, dan _countdown_ hitung mundur hari ke jatuh tempo.
+  - `activeComplaints`: Menampilkan daftar laporan kerusakan (_Maintenance_) milik tenant yang berstatus `open` atau `in_progress`.
+  - `lastTransaction`: Menampilkan riwayat transaksi terakhir dari tenant terkait.
+  - `calendarEvents`: Merangkum _event_ penting untuk dirender ke dalam kalender UI Frontend, seperti:
+    - Jadwal jatuh tempo pembayaran (`payment_due`).
+    - Reminder H-3 jatuh tempo pembayaran (`payment_reminder`).
+    - Jadwal maintenance/keluhan tenant (`maintenance_reported`).

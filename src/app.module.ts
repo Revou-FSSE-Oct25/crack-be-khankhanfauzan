@@ -20,6 +20,8 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
 import { InvoicesModule } from './modules/invoices/invoices.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { join } from 'path';
     MaintenancesModule,
     TransactionsModule,
     InvoicesModule,
+    ReviewsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [
