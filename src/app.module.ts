@@ -22,6 +22,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { PublicModule } from './modules/public/public.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     InvoicesModule,
     ReviewsModule,
     DashboardModule,
+    PublicModule,
   ],
   controllers: [AppController],
   providers: [
