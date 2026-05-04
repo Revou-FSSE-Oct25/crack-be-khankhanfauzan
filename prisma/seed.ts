@@ -24,14 +24,14 @@ async function main() {
 
     // 1. FACILITIES
     const facilitiesData = [
-        { name: 'WiFi', description: 'Kecepatan hingga 150 mbps' },
-        { name: 'AC', description: '1/2 PK' },
-        { name: 'Kamar Mandi Dalam', description: 'Ember, Gayung, dan Toilet Jongkok' },
-        { name: 'Kasur', description: 'Spring bed queen size' },
-        { name: 'Lemari', description: 'Ukuran standar dengan 2 pintu' },
-        { name: 'Meja Kerja', description: 'Ukuran standar dengan laci penyimpanan' },
-        { name: 'Kitchen Set', description: 'Meja dapur dan wastafel' },
-        { name: 'Listrik', description: 'Include listrik' },
+        { name: 'WiFi', description: 'Kecepatan hingga 150 mbps', iconUrl: "WiFi" },
+        { name: 'AC', description: '1/2 PK', iconUrl: "AirVent" },
+        { name: 'Kamar Mandi Dalam', description: 'Ember, Gayung, dan Toilet Jongkok', iconUrl: "ShowerHead" },
+        { name: 'Kasur', description: 'Spring bed queen size', iconUrl: "BedDouble" },
+        { name: 'Lemari', description: 'Ukuran standar dengan 2 pintu', iconUrl: "Columns2" },
+        { name: 'Meja Kerja', description: 'Ukuran standar dengan laci penyimpanan', iconUrl: "LampDesk" },
+        { name: 'Kitchen Set', description: 'Meja dapur dan wastafel', iconUrl: "CookingPot" },
+        { name: 'Listrik', description: 'Include listrik', iconUrl: "Zap" },
     ];
 
     const facilities: any[] = [];
