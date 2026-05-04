@@ -3,10 +3,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UploadPaymentProofDto } from './dto/upload-payment.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import { TransactionStatus, InvoiceStatus, BookingStatus } from '@prisma/client';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class TransactionsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private cloudinary: CloudinaryService
+  ) { }
 
   async uploadPaymentProof(dto: UploadPaymentProofDto, file: Express.Multer.File) {
     if (!file) {
@@ -25,7 +29,12 @@ export class TransactionsService {
       throw new BadRequestException('Invoice is already paid');
     }
 
-    const proofUrl = `/uploads/${file.filename}`;
+    // Upload to Cloudinary
+    const uploadResult = await this.cloudinary.uploadImage(file).catch(() => {
+      throw new BadRequestException('Failed to upload image');
+    });
+
+    const proofUrl = uploadResult.secure_url;
 
     const transaction = await this.prisma.transaction.create({
       data: {
