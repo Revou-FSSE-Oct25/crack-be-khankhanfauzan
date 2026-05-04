@@ -125,7 +125,7 @@ export class RoomsService {
       throw new NotFoundException('Room not found');
     }
 
-    if (room.status !== 'available') {
+    if (room.status === 'unavailable') {
       return {
         status: 200,
         message: `Room is currently ${room.status} and cannot be booked`,

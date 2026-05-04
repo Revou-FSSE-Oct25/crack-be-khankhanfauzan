@@ -80,13 +80,37 @@ export class TransactionsService {
         },
       });
 
-      // 2. If verified, update Invoice and Booking
+      // 2. If verified, calculate totals and update Invoice/Booking
       if (dto.status === TransactionStatus.verified) {
-        await tx.invoice.update({
-          where: { id: transaction.invoiceId },
-          data: { status: InvoiceStatus.paid },
+        const verifiedTransactions = await tx.transaction.findMany({
+          where: {
+            invoiceId: transaction.invoiceId,
+            status: TransactionStatus.verified,
+          },
         });
 
+        const totalPaid = verifiedTransactions.reduce(
+          (sum, t) => sum + Number(t.amount),
+          0,
+        );
+        const invoiceTotal = Number(transaction.invoice.totalAmount);
+
+        if (totalPaid >= invoiceTotal) {
+          // Lunas (Fully Paid)
+          await tx.invoice.update({
+            where: { id: transaction.invoiceId },
+            data: { status: InvoiceStatus.paid },
+          });
+        } else {
+          // Pembayaran Sebagian (Partially Paid)
+          await tx.invoice.update({
+            where: { id: transaction.invoiceId },
+            data: { status: InvoiceStatus.partially_paid },
+          });
+        }
+
+        // Konfirmasi booking untuk kedua kasus (Lunas atau DP/Sebagian)
+        // agar tenant bisa check-in dan tidak terkena auto-cancel dari cron job
         await tx.booking.update({
           where: { id: transaction.invoice.bookingId },
           data: { status: BookingStatus.confirmed },

@@ -25,18 +25,6 @@ export class BookingsService {
 
   async create(tenantId: string, dto: CreateBookingDto) {
     try {
-      // 0. Validate 1 Tenant 1 Active Booking limit
-      const existingActiveBooking = await this.prisma.booking.findFirst({
-        where: {
-          tenantId,
-          status: { in: [BookingStatus.pending_payment, BookingStatus.confirmed] },
-        },
-      });
-
-      if (existingActiveBooking) {
-        throw new BadRequestException('You already have an active booking. Only 1 active booking per tenant is allowed.');
-      }
-
       const { roomId, rentType, duration, startDate } = dto;
 
       // 1. Validate Room
@@ -252,6 +240,48 @@ export class BookingsService {
       message: 'Booking rejected and cancelled successfully',
       data: updated,
     };
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_8AM) // Berjalan setiap jam 8 pagi
+  async handlePaymentReminders() {
+    this.logger.log('Running cron job for payment reminders...');
+    const today = new Date();
+
+    try {
+      // Cari semua invoice yang belum lunas
+      const activeInvoices = await this.prisma.invoice.findMany({
+        where: {
+          status: { in: [InvoiceStatus.unpaid, InvoiceStatus.partially_paid] },
+        },
+        include: { booking: true },
+      });
+
+      for (const invoice of activeInvoices) {
+        const dueDate = new Date(invoice.dueDate);
+        const diffTime = dueDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // Kirim reminder pada H-3 dan H-1
+        if (diffDays === 3 || diffDays === 1) {
+          const tenantId = invoice.booking.tenantId;
+          const statusText = invoice.status === InvoiceStatus.partially_paid ? 'sebagian (DP)' : 'belum dibayar';
+
+          await this.prisma.notification.create({
+            data: {
+              userId: tenantId,
+              title: `Reminder: Jatuh Tempo Pembayaran H-${diffDays}`,
+              message: `Tagihan Anda sebesar Rp${invoice.totalAmount} (Status: ${statusText}) akan jatuh tempo dalam ${diffDays} hari. Harap segera lakukan pelunasan untuk menghindari denda atau pembatalan.`,
+              type: 'payment',
+              relatedId: invoice.id,
+            },
+          });
+
+          this.logger.log(`Sent H-${diffDays} reminder to tenant ${tenantId} for invoice ${invoice.id}`);
+        }
+      }
+    } catch (error) {
+      this.logger.error('Failed to process payment reminders', error);
+    }
   }
 
   @Cron(CronExpression.EVERY_HOUR)
