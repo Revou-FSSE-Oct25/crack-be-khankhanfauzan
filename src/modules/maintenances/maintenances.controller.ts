@@ -24,16 +24,6 @@ export class MaintenancesController {
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
     FilesInterceptor('images', 5, {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const randomName = Array(32)
-            .fill(null)
-            .map(() => Math.round(Math.random() * 16).toString(16))
-            .join('');
-          cb(null, `${randomName}${extname(file.originalname)}`);
-        },
-      }),
       fileFilter: (req, file, cb) => {
         if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
           return cb(new BadRequestException('Only image files are allowed!'), false);

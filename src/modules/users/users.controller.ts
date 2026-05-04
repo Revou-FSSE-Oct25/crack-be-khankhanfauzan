@@ -92,13 +92,6 @@ export class UsersController {
       { name: 'ktp', maxCount: 1 },
       { name: 'marriage', maxCount: 1 }
     ], {
-      storage: diskStorage({
-        destination: './uploads/profiles',
-        filename: (req, file, cb) => {
-          const randomName = Array(32).fill(null).map(() => Math.round(Math.random() * 16).toString()).join('');
-          cb(null, `${randomName}${extname(file.originalname)}`);
-        }
-      }),
       fileFilter: (req, file, cb) => {
         if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
           return cb(new BadRequestException(`Only image files are allowed for ${file.fieldname}!`), false);

@@ -10,10 +10,14 @@ import type {
   ApiListResponse,
 } from 'src/types/api-response.interface';
 import { RoleType, MaritalStatus, Prisma } from '@prisma/client';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly repository: UsersRepository) { }
+  constructor(
+    private readonly repository: UsersRepository,
+    private readonly cloudinary: CloudinaryService
+  ) { }
 
   async findAll(query?: GetUsersQueryDto): Promise<
     ApiListResponse<
@@ -178,11 +182,27 @@ export class UsersService {
       }
     }
 
-    // Extract URLs safely if the files were uploaded in this request
-    const avatarUrl = files?.avatar?.[0] ? `/uploads/profiles/${files.avatar[0].filename}` : undefined;
-    const ktpUrl = files?.ktp?.[0] ? `/uploads/profiles/${files.ktp[0].filename}` : undefined;
-    const marriageUrl = files?.marriage?.[0] ? `/uploads/profiles/${files.marriage[0].filename}` : undefined;
+    // Upload files to Cloudinary if they exist
+    let avatarUrl: string | undefined;
+    let ktpUrl: string | undefined;
+    let marriageUrl: string | undefined;
 
+    try {
+      if (files?.avatar?.[0]) {
+        const result = await this.cloudinary.uploadImage(files.avatar[0]);
+        avatarUrl = result.secure_url;
+      }
+      if (files?.ktp?.[0]) {
+        const result = await this.cloudinary.uploadImage(files.ktp[0]);
+        ktpUrl = result.secure_url;
+      }
+      if (files?.marriage?.[0]) {
+        const result = await this.cloudinary.uploadImage(files.marriage[0]);
+        marriageUrl = result.secure_url;
+      }
+    } catch (error) {
+      throw new BadRequestException('Failed to upload one or more profile images');
+    }
 
     const updated = await this.repository.update(id, {
       profile: {

@@ -1,17 +1,31 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateMaintenanceDto } from './dto/create-maintenance.dto';
 import { UpdateMaintenanceStatusDto } from './dto/update-maintenance.dto';
 import { MaintenancesRepository } from './maintenances.repository';
 import { GetMaintenancesQueryDto } from './dto/get-maintenances.dto';
 import { ApiListResponse } from 'src/types/api-response.interface';
 import { Maintenance, Prisma } from '@prisma/client';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class MaintenancesService {
-  constructor(private readonly repository: MaintenancesRepository) { }
+  constructor(
+    private readonly repository: MaintenancesRepository,
+    private readonly cloudinary: CloudinaryService
+  ) { }
 
   async create(tenantId: string, dto: CreateMaintenanceDto, files: Express.Multer.File[]) {
-    const images = files ? files.map(file => `/uploads/${file.filename}`) : [];
+    let images: string[] = [];
+    
+    if (files && files.length > 0) {
+      try {
+        const uploadPromises = files.map(file => this.cloudinary.uploadImage(file));
+        const uploadResults = await Promise.all(uploadPromises);
+        images = uploadResults.map(result => result.secure_url);
+      } catch (error) {
+        throw new BadRequestException('Failed to upload maintenance images');
+      }
+    }
 
     const data = await this.repository.create({
       category: dto.category,
