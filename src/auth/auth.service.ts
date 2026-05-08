@@ -10,13 +10,14 @@ import type { ApiResponse } from 'src/types/api-response.interface';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtPayload } from './types/jwtPayload.type';
+import { User } from 'src/types/user.type';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly jwt: JwtService,
-  ) {}
+  ) { }
 
   async register(dto: RegisterDto): Promise<
     ApiResponse<{
@@ -183,22 +184,43 @@ export class AuthService {
     await this.usersRepository.updateRtHash(userId, hash);
   }
 
-  async me(userId: string): Promise<ApiResponse<any>> {
+  async me(userId: string): Promise<ApiResponse<User>> {
     const user = await this.usersRepository.findById(userId);
 
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
+    const isKtpVerified = !!user.profile?.fotoKtpUrl;
+    const isMarriageRequired = user.profile?.maritalStatus === 'married';
+    const isMarriageVerified = isMarriageRequired
+      ? !!user.profile?.fotoBukuNikahUrl
+      : false;
+
     return {
       status: 200,
       message: 'Current user',
       data: {
         id: user.id,
-        fullname: user.profile?.fullName ?? '',
         email: user.email,
-        whatsappNumber: user.profile?.whatsappNumber ?? '',
-        role: user.role,
+        role: user.role as User['role'],
+        profile: {
+          fullName: user.profile?.fullName ?? '',
+          whatsappNumber: user.profile?.whatsappNumber ?? '',
+          maritalStatus: (user.profile?.maritalStatus as User['profile']['maritalStatus']) ?? null,
+          joinedAt: user.profile?.createdAt?.toISOString() ?? new Date().toISOString(),
+        },
+        document: {
+          fotoProfileUrl: user.profile?.fotoProfileUrl ?? null,
+          fotoKtpUrl: user.profile?.fotoKtpUrl ?? null,
+          fotoBukuNikahUrl: user.profile?.fotoBukuNikahUrl ?? null,
+        },
+        verified: {
+          isEmailVerified: user.isVerified, // Field dari model User
+          isProfileVerified: user.profile?.isProfileComplete ?? false,
+          isKtpVerified,
+          isMarriageVerified,
+        },
       },
     };
   }

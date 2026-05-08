@@ -33,7 +33,14 @@ export class BookingsRepository {
   }
 
   async findById(id: string): Promise<Booking | null> {
-    return this.prisma.booking.findUnique({ where: { id } });
+    return this.prisma.booking.findUnique({
+      where: { id },
+      include: {
+        room: true,
+        tenant: true,
+        invoices: true,
+      },
+    });
   }
 
   async update(id: string, data: Prisma.BookingUpdateInput): Promise<Booking> {

@@ -6,6 +6,10 @@ export type Room = {
   roomType: string;
   floor: number;
   price: number;
+  priceDaily?: number;
+  priceWeekly?: number;
+  priceMonthly: number;
+  priceYearly?: number;
   status: string;
   facilities: Facility[];
   dimensions?: RoomDimensions;

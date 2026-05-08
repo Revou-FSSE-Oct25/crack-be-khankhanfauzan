@@ -4,25 +4,25 @@ export type StayStatus = 'active' | 'inactive';
 
 export type User = {
   id: string;
-  fullName: string;
   email: string;
-  whatsappNumber: string;
   role: Role;
-  maritalStatus?: MaritalStatus;
-  profile?: UserProfile;
-  document?: UserDocuments;
+  profile: UserProfile;
+  document: UserDocuments;
   currentStay?: UserCurrentStay;
-  verified?: UserVerified;
+  verified: UserVerified;
 };
 
 export type UserProfile = {
-  avatarUrl?: string | null;
-  joinedAt: string;
+  fullName: string;
+  whatsappNumber: string;
+  maritalStatus: MaritalStatus | null;
+  joinedAt?: string;
 };
 
 export type UserDocuments = {
-  ktpUrl?: string | null;
-  marriageUrl?: string | null;
+  fotoProfileUrl: string | null;
+  fotoKtpUrl: string | null;
+  fotoBukuNikahUrl: string | null;
 };
 
 export type UserCurrentStay = {
@@ -32,6 +32,7 @@ export type UserCurrentStay = {
 };
 
 export type UserVerified = {
+  isEmailVerified: boolean;
   isProfileVerified: boolean;
   isKtpVerified: boolean;
   isMarriageVerified: boolean;

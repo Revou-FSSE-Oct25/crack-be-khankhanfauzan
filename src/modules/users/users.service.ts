@@ -239,7 +239,7 @@ export class UsersService {
     const isProfileVerified =
       !!updated.profile?.fullName &&
       !!updated.profile?.whatsappNumber &&
-      !!updated.profile?.fotoProfileUrl &&
+      // !!updated.profile?.fotoProfileUrl && //Optional
       isKtpVerified &&
       (!isMarriageRequired || isMarriageVerified);
 
@@ -274,21 +274,24 @@ export class UsersService {
 
     return {
       id: u.id,
-      fullName: u.profile?.fullName ?? '',
       email: u.email,
-      whatsappNumber: u.profile?.whatsappNumber ?? '',
       role: u.role as Role,
-      maritalStatus: u.profile?.maritalStatus ?? undefined,
+
       profile: {
-        joinedAt:
-          u.profile?.createdAt?.toISOString() ?? new Date().toISOString(),
-        avatarUrl: u.profile?.fotoProfileUrl ?? null,
+        fullName: u.profile?.fullName ?? '',
+        whatsappNumber: u.profile?.whatsappNumber ?? '',
+        maritalStatus: (u.profile?.maritalStatus as MaritalStatus) ?? null,
+        joinedAt: u.profile?.createdAt?.toISOString() ?? new Date().toISOString(),
       },
+
       document: {
-        ktpUrl: u.profile?.fotoKtpUrl ?? null,
-        marriageUrl: u.profile?.fotoBukuNikahUrl ?? null,
+        fotoProfileUrl: u.profile?.fotoProfileUrl ?? null,
+        fotoKtpUrl: u.profile?.fotoKtpUrl ?? null,
+        fotoBukuNikahUrl: u.profile?.fotoBukuNikahUrl ?? null,
       },
+
       verified: {
+        isEmailVerified: u.isVerified,
         isProfileVerified: u.profile?.isProfileComplete ?? false,
         isKtpVerified,
         isMarriageVerified,

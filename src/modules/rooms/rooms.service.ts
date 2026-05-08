@@ -210,6 +210,10 @@ export class RoomsService {
       roomType: r.roomType,
       floor: r.floor || 0,
       price: Number(r.priceMonthly || 0),
+      priceDaily: r.priceDaily ? Number(r.priceDaily) : undefined,
+      priceWeekly: r.priceWeekly ? Number(r.priceWeekly) : undefined,
+      priceMonthly: Number(r.priceMonthly || 0),
+      priceYearly: Number(r.priceMonthly || 0) * 12,
       status: r.status,
       facilities: r.roomFacilities?.map((rf) => rf.facility) || [],
       dimensions: {
