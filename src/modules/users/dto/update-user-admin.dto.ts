@@ -16,7 +16,7 @@ export class UpdateUserAdminDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  avatarUrl?: string | null;
+  fotoProfileUrl?: string | null;
 
   @ApiPropertyOptional({ enum: ['single', 'married'] })
   @IsOptional()
@@ -26,12 +26,12 @@ export class UpdateUserAdminDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  ktpUrl?: string | null;
+  fotoKtpUrl?: string | null;
 
   @ApiPropertyOptional()
   @ValidateIf((o: UpdateUserAdminDto) => o.maritalStatus === 'married')
   @IsString()
-  marriageUrl?: string | null;
+  fotoBukuNikahUrl?: string | null;
 
   @ApiPropertyOptional({ enum: ['tenant', 'admin'] })
   @IsOptional()

@@ -104,9 +104,9 @@ export class UsersController {
     @Param('id') id: string,
     @Body() dto: UpdateProfileDto,
     @UploadedFiles() files: {
-      avatar?: Express.Multer.File[];
-      ktp?: Express.Multer.File[];
-      marriage?: Express.Multer.File[];
+      fotoProfile?: Express.Multer.File[];
+      fotoKtp?: Express.Multer.File[];
+      fotoBukuNikah?: Express.Multer.File[];
     },
     @GetCurrentUser('role') role: string,
     @GetCurrentUser('sub') userId: string,

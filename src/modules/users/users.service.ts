@@ -108,9 +108,9 @@ export class UsersService {
             fullName: dto.fullName,
             whatsappNumber: dto.whatsappNumber,
             maritalStatus: dto.maritalStatus as MaritalStatus,
-            fotoProfileUrl: dto.avatarUrl,
-            fotoKtpUrl: dto.ktpUrl,
-            fotoBukuNikahUrl: dto.marriageUrl,
+            fotoProfileUrl: dto.fotoProfileUrl,
+            fotoKtpUrl: dto.fotoKtpUrl,
+            fotoBukuNikahUrl: dto.fotoBukuNikahUrl,
           },
           update: {
             ...(dto.fullName && { fullName: dto.fullName }),
@@ -118,10 +118,10 @@ export class UsersService {
             ...(dto.maritalStatus && {
               maritalStatus: dto.maritalStatus as MaritalStatus,
             }),
-            ...(dto.avatarUrl && { fotoProfileUrl: dto.avatarUrl }),
-            ...(dto.ktpUrl && { fotoKtpUrl: dto.ktpUrl }),
-            ...(dto.marriageUrl !== undefined && {
-              fotoBukuNikahUrl: dto.marriageUrl,
+            ...(dto.fotoProfileUrl && { fotoProfileUrl: dto.fotoProfileUrl }),
+            ...(dto.fotoKtpUrl && { fotoKtpUrl: dto.fotoKtpUrl }),
+            ...(dto.fotoBukuNikahUrl !== undefined && {
+              fotoBukuNikahUrl: dto.fotoBukuNikahUrl,
             }),
           },
         },
@@ -159,9 +159,9 @@ export class UsersService {
     id: string,
     dto: UpdateProfileDto,
     files?: {
-      avatar?: Express.Multer.File[];
-      ktp?: Express.Multer.File[];
-      marriage?: Express.Multer.File[];
+      fotoProfile?: Express.Multer.File[];
+      fotoKtp?: Express.Multer.File[];
+      fotoBukuNikah?: Express.Multer.File[];
     },
   ): Promise<ApiResponse<User>> {
     const current = await this.repository.findById(id);
@@ -174,7 +174,7 @@ export class UsersService {
 
     if (isNowMarried) {
       const hastExistingMarriageCertificate = !!current.profile?.fotoBukuNikahUrl;
-      const isUploadingNewMarriageCertificate = !!files?.marriage?.[0];
+      const isUploadingNewMarriageCertificate = !!files?.fotoBukuNikah?.[0];
 
       // if user doesn't jave a marriage certificate photo in DB yet, and is NOT Uploading one now, reject!
       if (!hastExistingMarriageCertificate && !isUploadingNewMarriageCertificate) {
@@ -183,21 +183,21 @@ export class UsersService {
     }
 
     // Upload files to Cloudinary if they exist
-    let avatarUrl: string | undefined;
+    let fotoProfileUrl: string | undefined;
     let ktpUrl: string | undefined;
     let marriageUrl: string | undefined;
 
     try {
-      if (files?.avatar?.[0]) {
-        const result = await this.cloudinary.uploadImage(files.avatar[0]);
-        avatarUrl = result.secure_url;
+      if (files?.fotoProfile?.[0]) {
+        const result = await this.cloudinary.uploadImage(files.fotoProfile[0]);
+        fotoProfileUrl = result.secure_url;
       }
-      if (files?.ktp?.[0]) {
-        const result = await this.cloudinary.uploadImage(files.ktp[0]);
+      if (files?.fotoKtp?.[0]) {
+        const result = await this.cloudinary.uploadImage(files.fotoKtp[0]);
         ktpUrl = result.secure_url;
       }
-      if (files?.marriage?.[0]) {
-        const result = await this.cloudinary.uploadImage(files.marriage[0]);
+      if (files?.fotoBukuNikah?.[0]) {
+        const result = await this.cloudinary.uploadImage(files.fotoBukuNikah[0]);
         marriageUrl = result.secure_url;
       }
     } catch (error) {
@@ -211,7 +211,7 @@ export class UsersService {
             fullName: dto.fullName,
             whatsappNumber: dto.whatsappNumber,
             maritalStatus: dto.maritalStatus as MaritalStatus,
-            fotoProfileUrl: avatarUrl,
+            fotoProfileUrl: fotoProfileUrl,
             fotoKtpUrl: ktpUrl,
             fotoBukuNikahUrl: marriageUrl,
           },
@@ -221,7 +221,7 @@ export class UsersService {
             ...(dto.maritalStatus && {
               maritalStatus: dto.maritalStatus as MaritalStatus,
             }),
-            ...(avatarUrl && { fotoProfileUrl: avatarUrl }),
+            ...(fotoProfileUrl && { fotoProfileUrl: fotoProfileUrl }),
             ...(ktpUrl && { fotoKtpUrl: ktpUrl }),
             ...(marriageUrl !== undefined && {
               fotoBukuNikahUrl: marriageUrl,
