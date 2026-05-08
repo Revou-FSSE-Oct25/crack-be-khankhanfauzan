@@ -41,8 +41,8 @@ export class DashboardRepository {
     });
   }
 
-  async findLastTransactionByTenantId(tenantId: string) {
-    return this.prisma.transaction.findFirst({
+  async findRecentTransactionsByTenantId(tenantId: string, limit: number = 5) {
+    return this.prisma.transaction.findMany({
       where: {
         invoice: {
           booking: {
@@ -51,6 +51,7 @@ export class DashboardRepository {
         }
       },
       orderBy: { createdAt: 'desc' },
+      take: limit,
       include: { invoice: true }
     });
   }

@@ -18,7 +18,7 @@ export class DashboardService {
           stayInfo: null,
           paymentReminder: null,
           activeComplaints: [],
-          lastTransaction: null,
+          recentTransactions: [],
           calendarEvents: []
         }
       };
@@ -61,8 +61,8 @@ export class DashboardService {
     // 4. Active Complaints
     const activeComplaints = await this.repository.findActiveComplaintsByTenantId(tenantId);
 
-    // 5. Last Transaction
-    const lastTransaction = await this.repository.findLastTransactionByTenantId(tenantId);
+    // 5. Recent Transactions
+    const recentTransactions = await this.repository.findRecentTransactionsByTenantId(tenantId, 5);
 
     // 6. Calendar Events
     const calendarEvents: any[] = [];
@@ -108,7 +108,7 @@ export class DashboardService {
         stayInfo,
         paymentReminder,
         activeComplaints,
-        lastTransaction,
+        recentTransactions,
         calendarEvents
       }
     };
