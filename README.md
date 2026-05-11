@@ -1,236 +1,233 @@
-# Emerald House (RevoU CRACK Project) - Backend API
+# Kost Management System Backend (Crack Project)
 
-Booking Management System for Boarding House (Kos-kosan).
+Comprehensive backend system for Kost (Boarding House) Management, built with NestJS, Prisma, and PostgreSQL.
 
----
+## 🚀 Tech Stack & Deployment
 
-## 🔄 Application Flow Process (Step-by-Step)
-
-Dokumentasi ini menjelaskan alur proses bisnis utama dari sistem manajemen booking Emerald House dari awal hingga akhir.
-
-### 1. Registrasi & Autentikasi (Authentication)
-
-- **Tenant Baru:** Calon penghuni (Tenant) mendaftar melalui endpoint `POST /auth/register`. Sistem otomatis memberikan role `tenant`.
-- **Login:** Tenant atau Admin masuk melalui `POST /auth/login`. Sistem mengembalikan JWT Access Token dan Refresh Token. Akses Token ini digunakan (di-set sebagai _Bearer Token_) untuk mengakses endpoint yang dilindungi (Protected Routes).
-
-### 2. Eksplorasi & Pemilihan Kamar (Room Browsing)
-
-- **Melihat Denah:** Frontend dapat memanggil `GET /rooms` dengan filter `building` (misal: "Emerald House"). Data yang dikembalikan mengandung koordinat `gridRow` dan `gridColumn` untuk me-render UI ala "kursi bioskop".
-- **Mengecek Ketersediaan:** Tenant memilih kamar dan tanggal masuk-keluar. Frontend memanggil `GET /rooms/:id/availability?startDate=...&endDate=...` untuk memastikan tidak ada _overlapping_ (bentrok) jadwal dengan penghuni lain.
-
-### 3. Proses Booking (Reservation)
-
-- **Membuat Booking:** Jika tersedia, Tenant mengirimkan permintaan booking melalui `POST /bookings` dengan durasi sewa (harian, mingguan, bulanan, tahunan).
-- **Kalkulasi Harga:** Backend otomatis menghitung total harga berdasarkan tipe durasi (`rentType`) yang dipilih dan menyetel status booking menjadi `pending_payment`.
-
-### 4. Pembayaran & Verifikasi Admin (Payment & Approval)
-
-- **Upload Bukti Pembayaran (Mendatang):** Tenant melakukan pembayaran (transfer) dan mengunggah bukti bayar.
-- **Verifikasi Admin:** Admin melihat daftar booking yang berstatus `pending_payment` (`GET /bookings?status=pending_payment`).
-- **Approval/Reject:**
-  - Jika pembayaran valid, Admin memanggil `PATCH /bookings/:id/approve`. Status booking berubah menjadi `confirmed` dan status kamar terkait berubah menjadi `occupied`.
-  - Jika pembayaran tidak valid/ditolak, Admin memanggil `PATCH /bookings/:id/reject`. Status booking berubah menjadi `cancelled`.
-- **Auto-Cancel (Cron Job):** Jika Tenant tidak menyelesaikan pembayaran dalam waktu 24 jam, sistem Cron Job yang berjalan di _background_ setiap jam akan membatalkan (cancel) booking tersebut secara otomatis.
-
-### 5. Masa Tinggal & Maintenance (Stay & Operations)
-
-- **Cek Status:** Selama masa sewa, Tenant dan Admin dapat melihat rincian kamar, tagihan bulan berikutnya (Invoices), dan riwayat pembayaran.
-- **Maintenance (Mendatang):** Jika ada kerusakan fasilitas (AC mati, dll), Tenant dapat melaporkan masalah ke sistem agar ditindaklanjuti oleh Admin.
-
-### 6. Checkout & Review
-
-- **Selesai Masa Sewa:** Saat durasi sewa berakhir, status booking dapat diselesaikan (`completed`) dan kamar kembali berstatus `available`.
-- **Ulasan (Review):** Tenant dapat memberikan rating dan ulasan (`POST /reviews`) terhadap kamar yang mereka tempati.
+- **Framework**: [NestJS](https://nestjs.com/) (Node.js)
+- **Database**: [Neon](https://neon.tech/) (Serverless PostgreSQL)
+- **ORM**: [Prisma](https://www.prisma.io/)
+- **Storage**: [Cloudinary](https://cloudinary.com/) (For all image uploads: KTP, Marriage Certificates, Payment Proofs, Maintenance issues)
+- **Deployment**: [Render](https://render.com/) (Backend Hosting)
+- **Authentication**: JWT (Access & Refresh Tokens)
 
 ---
 
-## 📄 Pagination & Filtering Documentation
+## 🏗 Architecture & Technical Setup
 
-Sistem API menggunakan format respons yang terstandarisasi untuk semua endpoint yang mengembalikan daftar/list data (contohnya: Rooms, Bookings, Users, Facilities). Endpoint ini secara bawaan telah dilengkapi dengan fitur **Pagination** dan **Filtering**.
+This project implements a robust layered architecture focusing on security, consistency, and maintainability.
 
-### 1. Struktur Respons Standar (Meta Data)
+### 1. Security Setup
 
-Setiap endpoint list akan mengembalikan objek `meta` yang berisi informasi pagination:
+- **JWT (JSON Web Tokens)**: Dual-token system. Short-lived Access Tokens (15m) and long-lived Refresh Tokens (7d) stored securely (hashed via Argon2 in DB).
+- **Guards**: `AtGuard` (Validates Access Token), `RtGuard` (Validates Refresh Token), and `RolesGuard` (RBAC: 'admin' vs 'tenant').
+- **CORS & Helmet**: Configured in `main.ts` to prevent XSS and restrict unauthorized cross-origin requests.
+
+### 2. Enveloped Responses (Interceptors)
+
+All API responses are formatted consistently using a global `TransformInterceptor`.
+Format:
 
 ```json
 {
   "status": 200,
-  "message": "Data fetched successfully",
-  "data": [ ... ],
-  "meta": {
-    "totalItems": 100,  // Total keseluruhan data yang sesuai filter
-    "page": 1,          // Halaman saat ini
-    "perPage": 10,      // Jumlah data per halaman
-    "totalPages": 10    // Total keseluruhan halaman
-  }
+  "message": "Success message",
+  "data": { ... },
+  "meta": { "totalItems": 10, "page": 1, "totalPages": 1 } // For pagination
 }
 ```
 
-_Note: Beberapa endpoint (seperti Rooms) mungkin mengembalikan properti `meta` tambahan seperti `totalRooms`, `totalAvailable`, dll._
+### 3. Global Exception Filter
 
-### 2. Penggunaan Pagination Umum
+A custom `AllExceptionsFilter` catches all errors (HttpExceptions, Prisma Errors, Internal Server Errors) and formats them into the standard envelope format, preventing stack trace leaks to the client.
 
-Parameter query berikut dapat digunakan di **semua** endpoint yang mendukung list:
+### 4. File Uploads (Cloudinary Integration)
 
-- `page` (number): Halaman yang ingin diakses (default: `1`)
-- `perPage` (number): Jumlah data yang ingin ditampilkan per halaman (default: `10`)
+Multer interceptors handle `multipart/form-data`. Instead of saving to disk, buffers are directly piped to `CloudinaryService` using `Promise.all` for batch uploads (e.g., Maintenance images) or single uploads (Payment Proofs, User Profiles).
 
-**Contoh:**
-`GET /api/v1/rooms?page=2&perPage=5`
+### 5. Logger & Middleware
 
----
-
-### 3. Dokumentasi Endpoint Filtering & Pagination
-
-#### A. Rooms (`GET /api/v1/rooms`)
-
-Digunakan untuk mendapatkan daftar kamar. Mendukung filter spesifik kamar.
-
-- **Query Parameters:**
-  - `floor` (number): Filter berdasarkan lantai (misal: `2`).
-  - `status` (string): Filter berdasarkan status ketersediaan (`available`, `unavailable`, `occupied`).
-  - `roomType` (string): Filter berdasarkan tipe kamar (`standard`, `deluxe`, dll).
-  - `price` (string): Mengurutkan berdasarkan harga bulanan (`asc` atau `desc`).
-- **Contoh Penggunaan:**
-  - Mendapatkan kamar di lantai 2 yang tersedia:
-    `GET /api/v1/rooms?floor=2&status=available&page=1&perPage=10`
-  - Mengurutkan semua kamar dari harga termurah:
-    `GET /api/v1/rooms?price=asc`
-
-#### B. Bookings (`GET /api/v1/bookings`)
-
-Digunakan untuk mendapatkan daftar transaksi booking (Membutuhkan Bearer Token - Admin/Tenant).
-
-- **Query Parameters:**
-  - `status` (string): Filter berdasarkan status transaksi (`pending_payment`, `confirmed`, `cancelled`, `completed`).
-  - `tenantId` (string/uuid): Filter transaksi milik tenant spesifik.
-  - `roomId` (string/uuid): Filter transaksi untuk kamar spesifik.
-- **Contoh Penggunaan:**
-  - Melihat semua transaksi yang belum dibayar di halaman 1:
-    `GET /api/v1/bookings?status=pending_payment&page=1&perPage=20`
-
-#### C. Users (`GET /api/v1/users`)
-
-Digunakan untuk mendapatkan daftar pengguna/tenant (Membutuhkan Bearer Token - Admin Only).
-
-- **Query Parameters:**
-  - `role` (string): Filter berdasarkan role (`admin` atau `tenant`).
-  - `search` (string): Mencari pengguna berdasarkan nama lengkap, nomor WhatsApp, atau email (case-insensitive).
-- **Contoh Penggunaan:**
-  - Mencari tenant dengan nama "Fauzan":
-    `GET /api/v1/users?role=tenant&search=Fauzan`
-
-#### D. Facilities (`GET /api/v1/facilities`)
-
-Digunakan untuk mendapatkan daftar fasilitas yang tersedia.
-
-- **Query Parameters:**
-  - `name` (string): Pencarian nama fasilitas (case-insensitive).
-- **Contoh Penggunaan:**
-  - Mencari fasilitas yang mengandung kata "AC":
-    `GET /api/v1/facilities?name=AC&page=1&perPage=10`
+- **NestJS Logger**: Used across all services and cron jobs to track events and errors.
+- **ValidationPipe**: Global pipe with `whitelist: true` and `transform: true` (implicit conversion enabled for query params).
 
 ---
 
-## Swagger API Docs
+## 📊 Database Entity Relationship Diagram (ERD)
 
-Semua dokumentasi lengkap, termasuk model DTO, validasi form, dan contoh respon dapat diakses melalui Swagger UI:
-👉 **`http://localhost:3001/api`** (Jika dijalankan secara lokal).
+```mermaid
+erDiagram
+    User ||--o| UserProfile : has
+    User ||--o{ Booking : makes
+    User ||--o{ Transaction : verifies
+    User ||--o{ Maintenance : reports
+    User ||--o{ Notification : receives
 
----
+    Room ||--o{ RoomFacility : contains
+    Facility ||--o{ RoomFacility : belongs_to
+    Room ||--o{ Booking : booked_in
+    Room ||--o{ Maintenance : has
 
-## 💳 Phase 2: Invoices & Payment Transactions
+    Booking ||--o{ Invoice : generates
+    Booking ||--o| Review : receives
 
-Sistem kini mendukung pembuatan Invoice otomatis dan alur pembayaran lengkap.
+    Invoice ||--o{ Transaction : paid_via
 
-### 1. Automated Invoice Generation
+    User {
+        String id PK
+        String email
+        String password
+        RoleType role
+        Boolean isVerified
+    }
 
-- **Trigger:** Setiap kali Tenant membuat Booking baru (`POST /bookings`), sistem secara otomatis akan membuat record `Invoice` dengan status `unpaid`.
-- **Due Date:** Tenggat waktu pembayaran diatur otomatis 24 jam sejak Booking dibuat.
-- **Endpoint:** Tenant dapat melihat tagihan mereka melalui `GET /invoices`.
+    UserProfile {
+        String id PK
+        String userId FK
+        String fullName
+        String maritalStatus
+        String fotoKtpUrl
+        String fotoBukuNikahUrl
+        Boolean isProfileComplete
+    }
 
-### 2. Upload Payment Proof (Tenant)
+    Room {
+        String id PK
+        String roomNumber
+        RoomStatus status
+        Decimal priceMonthly
+    }
 
-- **Proses:** Setelah mentransfer dana, Tenant wajib mengunggah bukti transfer.
-- **Endpoint:** `POST /transactions/upload-proof`
-- **Format:** Menggunakan `multipart/form-data` dengan field:
-  - `invoiceId` (string)
-  - `amount` (number)
-  - `paymentMethod` (string)
-  - `file` (file gambar: jpg/jpeg/png)
-- **Hasil:** Status transaksi menjadi `pending` dan menunggu verifikasi Admin. File disimpan di `/uploads` dan dapat diakses publik (Static Serving).
+    Booking {
+        String id PK
+        String tenantId FK
+        String roomId FK
+        DateTime startDate
+        DateTime endDate
+        BookingStatus status
+    }
 
-### 3. Payment Verification (Admin)
+    Invoice {
+        String id PK
+        String bookingId FK
+        Decimal totalAmount
+        InvoiceStatus status
+        DateTime dueDate
+    }
 
-- **Proses:** Admin mengecek mutasi rekening dan memverifikasi bukti yang diunggah Tenant.
-- **Endpoint:** `PATCH /transactions/:id/verify`
-- **Payload:** `{ "status": "verified" | "rejected", "rejectReason": "..." }`
-- **Otomasi:** Jika Admin mengirim status `verified`, sistem secara atomik (_Database Transaction_) akan:
-  1. Mengubah status Transaction menjadi `verified`.
-  2. Mengubah status Invoice terkait menjadi `paid`.
-  3. Mengubah status Booking terkait menjadi `confirmed`.
-
----
-
-## 🛠️ Phase 3: Maintenances (Complaints) & Reviews
-
-Sistem kini mendukung manajemen komplain tenant dan ulasan kamar.
-
-### 1. Maintenances (Tenant Complaints)
-
-Sistem untuk tenant melaporkan masalah atau kerusakan fasilitas kamar.
-
-- **Pembuatan Laporan (Tenant):**
-  - **Endpoint:** `POST /maintenances` (multipart/form-data)
-  - Tenant dapat mengunggah hingga 5 foto kerusakan beserta kategori (plumbing, electrical, furniture, internet, other) dan deskripsi.
-- **Daftar Laporan dengan Filter Lanjutan:**
-  - **Endpoint:** `GET /maintenances`
-  - **Filter yang didukung:**
-    - `search` (string): Mencari berdasarkan nomor kamar, ID maintenance, nama tenant, ID tenant, atau deskripsi.
-    - `status` (string): Filter berdasarkan status komplain (`open`, `in_progress`, `resolved`, `closed`).
-    - `category` (string): Filter berdasarkan kategori kerusakan.
-    - `startDate` & `endDate` (string/ISO): Filter berdasarkan rentang tanggal pelaporan.
-  - **Contoh Penggunaan:**
-    `GET /maintenances?status=open&category=plumbing&search=kamar bocor&startDate=2024-01-01&endDate=2024-01-31`
-- **Update Status (Admin):**
-  - **Endpoint:** `PATCH /maintenances/:id/status`
-  - Admin dapat memperbarui status laporan (misal dari `open` menjadi `in_progress`) dan menambahkan `adminNotes` (catatan teknisi).
-
-### 2. Reviews & Ratings
-
-Sistem untuk tenant memberikan ulasan dan penilaian terhadap kamar setelah selesai menyewa.
-
-- **Pembuatan Ulasan (Tenant):**
-  - **Endpoint:** `POST /reviews`
-  - **Validasi Ketat:**
-    1. Tenant hanya dapat memberikan ulasan untuk booking miliknya sendiri.
-    2. Tenant **hanya** dapat memberikan ulasan jika status booking sudah `completed` (selesai masa sewa).
-    3. Satu booking hanya dapat diulas maksimal satu kali.
-  - **Payload:** `{ "bookingId": "uuid", "rating": 5, "comment": "Bagus" }`
-- **Daftar Ulasan:**
-  - **Endpoint:** `GET /reviews`
-  - **Filter yang didukung:** `roomId`, `tenantId`.
-  - **Contoh Penggunaan:**
-    `GET /reviews?roomId=uuid-kamar-123&page=1&perPage=5`
+    Transaction {
+        String id PK
+        String invoiceId FK
+        Decimal amount
+        TransactionStatus status
+        String proofUrl
+    }
+```
 
 ---
 
-## 📊 Phase 4: Tenant Dashboard
+## 🔄 Core Business Flows & Edge Cases
 
-Sistem menyediakan endpoint khusus untuk halaman _Home/Dashboard_ aplikasi _Frontend_ Tenant. Sesuai skenario dunia nyata, **Satu Tenant hanya diperbolehkan memiliki maksimal satu Booking yang sedang aktif** (1 tenant = 1 room).
+### 1. Booking & Indefinite Extension Flow
 
-### 1. Tenant Dashboard API
+```mermaid
+flowchart TD
+    A[Tenant Selects Room] --> B{Has Active Booking?}
+    B -- Yes, Different Room --> C[Reject: 1 Active Booking Limit]
+    B -- Yes, Same Room --> D[Allowed: Extension Mode]
+    B -- No --> D
 
-Endpoint yang memuat seluruh rangkuman info (agregasi) yang dibutuhkan Tenant pada Home Page mereka.
+    D --> E{Are Dates Overlapping?}
+    E -- Yes --> F[Reject: Room Unavailable for dates]
+    E -- No --> G[Create Booking & Invoice]
 
-- **Endpoint:** `GET /dashboard/tenant`
-- **Response Data yang Disediakan:**
-  - `activeBooking`: Detail lengkap kamar yang saat ini disewa beserta fasilitasnya.
-  - `stayInfo`: Menghitung _real-time_ berapa hari tenant sudah tinggal dan total durasi kontrak/sewa.
-  - `paymentReminder`: Mengecek tagihan (_Invoice_) terdekat yang belum dibayar, menampilkan tanggal jatuh tempo, total tagihan, dan _countdown_ hitung mundur hari ke jatuh tempo.
-  - `activeComplaints`: Menampilkan daftar laporan kerusakan (_Maintenance_) milik tenant yang berstatus `open` atau `in_progress`.
-  - `lastTransaction`: Menampilkan riwayat transaksi terakhir dari tenant terkait.
-  - `calendarEvents`: Merangkum _event_ penting untuk dirender ke dalam kalender UI Frontend, seperti:
-    - Jadwal jatuh tempo pembayaran (`payment_due`).
-    - Reminder H-3 jatuh tempo pembayaran (`payment_reminder`).
-    - Jadwal maintenance/keluhan tenant (`maintenance_reported`).
+    G --> H[Admin Approves Booking]
+    H --> I[Tenant Uploads Payment]
+    I --> J[Admin Verifies Payment]
+```
+
+### 2. Partial Payment Logic
+
+```mermaid
+flowchart TD
+    A[Tenant Uploads Payment Proof] --> B[Admin Verifies Transaction]
+    B --> C[Sum all verified transactions for Invoice]
+    C --> D{Total Paid >= Invoice Total?}
+    D -- Yes --> E[Invoice Status = PAID]
+    D -- No --> F[Invoice Status = PARTIALLY_PAID]
+
+    E --> G[Booking Status = CONFIRMED]
+    F --> G
+
+    G --> H[Tenant can Check-in, Auto-Cancel Cron bypassed]
+```
+
+---
+
+## 🛠 Services, DTOs & Edge Cases
+
+### 1. Auth & Users Module
+
+- **Services**: Handles registration, login, token refresh, and profile management.
+- **Edge Cases**:
+  - **Marital Status**: If a tenant sets `maritalStatus` to `married`, the system _strictly requires_ `fotoBukuNikahUrl`. If they try to update their profile to married without uploading the certificate, the request is rejected.
+  - **Profile Completion**: `isProfileComplete` is dynamically calculated. It requires Full Name, WhatsApp, KTP, and (if married) Marriage Certificate.
+
+### 2. Rooms Module
+
+- **Services**: CRUD for Rooms and Facilities.
+- **Edge Cases**:
+  - `checkAvailability` does not outright reject if a room is `occupied`. It delegates the check to exact date overlapping. This is crucial for the **Indefinite Extension Workaround**, allowing tenants to re-book their currently occupied room for future months.
+
+### 3. Bookings Module
+
+- **Services**: Booking creation, approval, and automated Cron Jobs.
+- **Edge Cases**:
+  - **Indefinite Extension Workaround**: Tenants cannot book multiple rooms, but they _can_ create multiple bookings for the _same_ room as long as dates don't overlap. This generates a new independent Booking and Invoice for the extension period.
+  - **Payment Reminders**: A Cron Job runs daily at 08:00 AM, scanning for `unpaid` or `partially_paid` invoices. It generates Notifications for tenants exactly on H-3 and H-1 before the due date.
+  - **Auto-Cancel**: A separate Cron Job cancels `pending_payment` bookings if not paid within 24 hours.
+
+### 4. Transactions & Invoices Module
+
+- **Services**: Uploading payment proofs, verifying transactions.
+- **Edge Cases**:
+  - **Partial Payments**: Supported natively. If a tenant pays 1 month of a 2-month booking, the admin verifies the nominal amount. The invoice becomes `partially_paid`, but the Booking is set to `confirmed` so the tenant isn't evicted. The tenant can upload subsequent proofs to the same invoice until fully `paid`.
+  - **Rejections**: If an Admin rejects a transaction, `rejectReason` is mandatory.
+
+### 5. Maintenances & Reviews Module
+
+- **Services**: Tenant complaints and room reviews.
+- **Edge Cases**:
+  - Maintenance allows batch image uploads (Cloudinary `Promise.all`).
+  - Status flows strictly from `open` -> `in_progress` -> `resolved`.
+  - Reviews can only be submitted if the Booking is `confirmed` or `completed`.
+
+### 6. Dashboard Module
+
+- **Services**: Aggregates data for the Tenant Home Screen.
+- **Edge Cases**:
+  - If a tenant has no active booking, returns a safe null object structure instead of 404.
+  - Calculates `daysStayed` accurately based on `startDate`.
+  - Returns an array of `recentTransactions` (last 5) instead of just one.
+  - Generates virtual Calendar Events for upcoming Due Dates and H-3 reminders.
+
+---
+
+## 📚 API Reference (Swagger)
+
+Full interactive API documentation is available via Swagger UI.
+When running the server locally, visit:
+`http://localhost:8000/api`
+
+For production url visit:
+`https://crack-be-khankhanfauzan.onrender.com/api`
+
+_notes: when open the production link for the first time, the server will cold boot for about 10 minutes, after that it will work normally_
+
+**Key Swagger Configurations implemented:**
+
+- `@ApiTags`: Groups endpoints logically.
+- `@ApiBearerAuth`: Enables JWT token input in the Swagger UI.
+- `@ApiOperation`: Describes what the endpoint does.
+- `@ApiResponse` / `@ApiOkResponse`: Documents the exact Enveloped Response format (including `meta` for pagination).
+- `@ApiConsumes('multipart/form-data')`: Accurately represents file upload endpoints for Cloudinary.
+- `@ApiProperty`: Documented across all DTOs for accurate schema representation.
