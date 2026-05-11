@@ -64,3 +64,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .agent
 uploads/
 PRESENTATION_DECK.md
+
+*_RUBRIC.md
