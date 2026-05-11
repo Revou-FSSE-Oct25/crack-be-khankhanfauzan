@@ -113,4 +113,132 @@ export class DashboardService {
       }
     };
   }
+
+  async getAdminDashboardSummary(range: string = 'weekday') {
+    // 1. Statistics
+    const [totalTenants, roomStats, maintenanceStats, outstandingInvoices] = await Promise.all([
+      this.repository.countActiveTenants(),
+      this.repository.getRoomStats(),
+      this.repository.getMaintenanceStats(),
+      this.repository.getOutstandingInvoices()
+    ]);
+
+    const occupancyRate = roomStats.total > 0 ? Math.round((roomStats.occupied / roomStats.total) * 100) : 0;
+
+    // 2. Sales Report
+    const now = new Date();
+    let startDate = new Date();
+
+    if (range === 'monthly') {
+      startDate.setMonth(now.getMonth() - 6); // Last 6 months for example
+      startDate.setDate(1);
+    } else {
+      startDate.setDate(now.getDate() - 6); // Last 7 days including today
+    }
+
+    startDate.setHours(0, 0, 0, 0);
+
+    const transactions = await this.repository.getVerifiedTransactions(startDate);
+    const salesReport: { label: string, value: number }[] = [];
+
+    if (range === 'monthly') {
+      // Group by month
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const grouped = new Map<string, number>();
+
+      transactions.forEach(t => {
+        const d = new Date(t.createdAt);
+        const key = `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`;
+        grouped.set(key, (grouped.get(key) || 0) + Number(t.amount));
+      });
+
+      grouped.forEach((value, label) => salesReport.push({ label, value }));
+    } else {
+      // Group by weekday
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      // Initialize last 7 days to 0 to ensure continuous chart
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - (6 - i));
+        salesReport.push({ label: dayNames[d.getDay()], value: 0 });
+      }
+
+      transactions.forEach(t => {
+        const d = new Date(t.createdAt);
+        const label = dayNames[d.getDay()];
+        const entry = salesReport.find(s => s.label === label);
+        if (entry) entry.value += Number(t.amount);
+      });
+    }
+
+    // 3. Cost Breakdown (Skipped, requires new expense tracking table)
+    const costBreakdown: any[] = [];
+
+    // 4. Recent Activities
+    const [recentTx, recentBk] = await Promise.all([
+      this.repository.getRecentActivitiesTransactions(),
+      this.repository.getRecentActivitiesBookings()
+    ]);
+
+    const mappedTx = recentTx.map(t => ({
+      id: t.id,
+      type: 'payment',
+      title: `Pembayaran sewa • ${t.invoice.booking.tenant.profile?.fullName || 'Tenant'}`,
+      subtitle: Number(t.amount).toString(),
+      date: t.createdAt
+    }));
+
+    const mappedBk = recentBk.map(b => ({
+      id: b.id,
+      type: 'booking',
+      title: `Booking kamar ${b.room.roomNumber} • ${b.tenant.profile?.fullName || 'Tenant'}`,
+      subtitle: b.rentType,
+      date: b.createdAt
+    }));
+
+    const recentActivities = [...mappedTx, ...mappedBk]
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 5);
+
+    // 5. Recent Maintenances
+    const rawMaintenances = await this.repository.getRecentMaintenances();
+    const recentMaintenances = rawMaintenances.map(m => ({
+      id: m.id,
+      category: m.category,
+      room: m.room?.roomNumber || 'Unknown',
+      description: m.description,
+      priority: 'high' // Hardcoded since priority doesn't exist in schema
+    }));
+
+    // 6. Agenda
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const agendaStats = await this.repository.getAgendaStats(todayStart, todayEnd);
+
+    return {
+      status: 200,
+      message: "Dashboard summary fetched successfully",
+      data: {
+        statistics: {
+          totalTenants: { value: totalTenants, subtitle: "Aktif" },
+          occupancy: { value: `${occupancyRate}%`, subtitle: `${roomStats.occupied}/${roomStats.total} Kamar` },
+          activeMaintenances: { value: maintenanceStats.active, subtitle: "Perlu ditinjau" },
+          outstandingInvoices: { value: outstandingInvoices, subtitle: "Periode berjalan" }
+        },
+        salesReport,
+        costBreakdown,
+        recentActivities,
+        recentMaintenances,
+        agenda: agendaStats,
+        roomStatus: {
+          occupied: roomStats.occupied,
+          empty: roomStats.empty,
+          maintenance: roomStats.maintenance
+        }
+      }
+    };
+  }
 }
