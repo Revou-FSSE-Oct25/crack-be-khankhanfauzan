@@ -23,7 +23,17 @@ export class BookingsRepository {
       orderBy: params?.orderBy,
       include: {
         room: true,
-        tenant: true,
+        tenant: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            isVerified: true,
+            createdAt: true,
+            updatedAt: true,
+            profile: true,
+          },
+        },
       },
     });
   }
@@ -37,7 +47,17 @@ export class BookingsRepository {
       where: { id },
       include: {
         room: true,
-        tenant: true,
+        tenant: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            isVerified: true,
+            createdAt: true,
+            updatedAt: true,
+            profile: true,
+          },
+        },
         invoices: true,
       },
     });

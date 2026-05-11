@@ -31,7 +31,20 @@ export class InvoicesRepository {
             where: { id },
             include: {
                 booking: {
-                    include: { room: true, tenant: true },
+                    include: {
+                        room: true,
+                        tenant: {
+                            select: {
+                                id: true,
+                                email: true,
+                                role: true,
+                                isVerified: true,
+                                createdAt: true,
+                                updatedAt: true,
+                                profile: true,
+                            },
+                        },
+                    },
                 },
                 transactions: true,
             },

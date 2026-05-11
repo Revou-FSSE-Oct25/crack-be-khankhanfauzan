@@ -24,7 +24,17 @@ export class MaintenancesRepository {
             orderBy: params?.orderBy,
             include: params?.include || {
                 room: true,
-                tenant: true,
+                tenant: {
+                    select: {
+                        id: true,
+                        email: true,
+                        role: true,
+                        isVerified: true,
+                        createdAt: true,
+                        updatedAt: true,
+                        profile: true,
+                    },
+                },
             },
         });
     }
