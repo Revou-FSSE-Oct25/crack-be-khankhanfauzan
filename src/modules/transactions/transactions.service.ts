@@ -115,6 +115,12 @@ export class TransactionsService {
           where: { id: transaction.invoice.bookingId },
           data: { status: BookingStatus.confirmed },
         });
+
+        // Ubah status room menjadi 'occupied' karena pembayaran sudah diterima (baik DP maupun Lunas)
+        await tx.room.update({
+          where: { id: transaction.invoice.booking.roomId },
+          data: { status: 'occupied' },
+        });
       }
 
       return {
