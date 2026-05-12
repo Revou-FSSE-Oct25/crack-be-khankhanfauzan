@@ -40,4 +40,7 @@ export class CreateRoomDto {
   @ValidateNested()
   @Type(() => RoomDimensionsDto)
   dimensions?: RoomDimensionsDto;
+  @ApiPropertyOptional({ type: 'array', items: { type: 'string', format: 'binary' }, description: 'Foto-foto kamar' })
+  @IsOptional()
+  images?: any[];
 }

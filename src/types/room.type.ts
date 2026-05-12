@@ -13,6 +13,7 @@ export type Room = {
   status: string;
   facilities: Facility[];
   dimensions?: RoomDimensions;
+  images?: string[];
 };
 
 export type RoomDimensions = {

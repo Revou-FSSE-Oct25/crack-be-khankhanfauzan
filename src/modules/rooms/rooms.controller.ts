@@ -9,6 +9,9 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFiles,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -21,7 +24,9 @@ import {
   ApiTags,
   getSchemaPath,
   ApiOperation,
+  ApiConsumes,
 } from '@nestjs/swagger';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
@@ -35,10 +40,19 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 @ApiExtraModels(RoomDto)
 @Controller('rooms')
 export class RoomsController {
-  constructor(private readonly roomsService: RoomsService) {}
+  constructor(private readonly roomsService: RoomsService) { }
 
   @Roles('admin')
   @Post()
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FilesInterceptor('images', 5, {
+    fileFilter: (req, file, cb) => {
+      if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+        return cb(new BadRequestException('Only image files are allowed!'), false);
+      }
+      cb(null, true);
+    },
+  }))
   @ApiBody({ type: CreateRoomDto })
   @ApiCreatedResponse({
     description: 'Kamar berhasil dibuat',
@@ -51,8 +65,11 @@ export class RoomsController {
       },
     },
   })
-  create(@Body() createRoomDto: CreateRoomDto) {
-    return this.roomsService.create(createRoomDto);
+  create(
+    @Body() createRoomDto: CreateRoomDto,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.roomsService.create(createRoomDto, files);
   }
 
   @Public()
@@ -164,6 +181,15 @@ export class RoomsController {
   }
 
   @Patch(':id')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FilesInterceptor('images', 5, {
+    fileFilter: (req, file, cb) => {
+      if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+        return cb(new BadRequestException('Only image files are allowed!'), false);
+      }
+      cb(null, true);
+    },
+  }))
   @ApiParam({ name: 'id', type: String, description: 'ID kamar' })
   @ApiOkResponse({
     description: 'Kamar berhasil diperbarui',
@@ -176,8 +202,12 @@ export class RoomsController {
       },
     },
   })
-  update(@Param('id') id: string, @Body() updateRoomDto: UpdateRoomDto) {
-    return this.roomsService.update(id, updateRoomDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateRoomDto: UpdateRoomDto,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.roomsService.update(id, updateRoomDto, files);
   }
 
   @Roles('admin')

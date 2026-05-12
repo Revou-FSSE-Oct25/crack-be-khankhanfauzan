@@ -22,4 +22,7 @@ export class RoomDto {
   facilities: FacilityDto[];
   @ApiProperty({ type: RoomDimensionsDto })
   dimensions: RoomDimensionsDto;
+
+  @ApiProperty({ type: 'array', items: { type: 'string' }, description: 'Array of image URLs' })
+  images: string[];
 }

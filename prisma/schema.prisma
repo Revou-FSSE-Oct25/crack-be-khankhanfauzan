@@ -183,6 +183,7 @@ model Room {
   width        Decimal
   area         Decimal?
   unit         String     @default("m")
+  images       String[]   @db.Text
 
   // Grid Mapping for Frontend UI (Cinema-style layout)
   gridRow    Int? @map("grid_row")

@@ -42,4 +42,12 @@ export class UpdateRoomDto {
   @ValidateNested()
   @Type(() => RoomDimensionsDto)
   dimensions?: RoomDimensionsDto;
+
+  @ApiPropertyOptional({ type: 'array', items: { type: 'string', format: 'binary' }, description: 'Foto-foto kamar baru' })
+  @IsOptional()
+  images?: any[];
+
+  @ApiPropertyOptional({ type: 'array', items: { type: 'string' }, description: 'URL foto-foto yang ingin dihapus' })
+  @IsOptional()
+  removeImages?: string | string[];
 }

@@ -22,4 +22,8 @@ export class GetRoomsQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   price?: 'asc' | 'desc';
+  @ApiPropertyOptional({ description: 'Search based on room number', example: 'A-101' })
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

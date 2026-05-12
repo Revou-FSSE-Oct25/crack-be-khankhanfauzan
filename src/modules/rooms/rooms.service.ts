@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { RoomsRepository, RoomWithFacilities } from './rooms.repository';
@@ -10,15 +10,29 @@ import type {
 import type { Room } from 'src/types/room.type';
 import { RoomStatus, RoomType, BookingStatus, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class RoomsService {
   constructor(
     private readonly repository: RoomsRepository,
     private readonly prisma: PrismaService,
+    private readonly cloudinary: CloudinaryService,
   ) { }
 
-  async create(createRoomDto: CreateRoomDto): Promise<ApiResponse<Room>> {
+  async create(createRoomDto: CreateRoomDto, files?: Express.Multer.File[]): Promise<ApiResponse<Room>> {
+    let images: string[] = [];
+
+    if (files && files.length > 0) {
+      try {
+        const uploadPromises = files.map(file => this.cloudinary.uploadImage(file));
+        const uploadResults = await Promise.all(uploadPromises);
+        images = uploadResults.map(result => result.secure_url);
+      } catch (error) {
+        throw new BadRequestException('Failed to upload one or more room images');
+      }
+    }
+
     const data = await this.repository.create({
       roomNumber: createRoomDto.roomNumber,
       roomType: createRoomDto.roomType as RoomType,
@@ -29,6 +43,7 @@ export class RoomsService {
       width: createRoomDto.dimensions?.width || 0,
       area: createRoomDto.dimensions?.area,
       unit: createRoomDto.dimensions?.unit || 'm',
+      images: images,
       roomFacilities: {
         create:
           createRoomDto.facilities?.map((f) => ({
@@ -65,12 +80,19 @@ export class RoomsService {
       status,
       roomType,
       price,
+      search,
     } = query || {};
 
     const where: Prisma.RoomWhereInput = {};
     if (floor) where.floor = floor;
     if (status) where.status = status as RoomStatus;
     if (roomType) where.roomType = roomType as RoomType;
+    if (search) {
+      where.roomNumber = {
+        contains: search,
+        mode: 'insensitive',
+      };
+    }
 
     const orderBy: Prisma.RoomOrderByWithRelationInput = price
       ? { priceMonthly: price }
@@ -158,10 +180,34 @@ export class RoomsService {
   async update(
     id: string,
     updateRoomDto: UpdateRoomDto,
+    files?: Express.Multer.File[],
   ): Promise<ApiResponse<Room>> {
     const existing = await this.repository.findById(id);
     if (!existing) {
       throw new NotFoundException('Room not found');
+    }
+
+    let updatedImages = [...existing.images];
+
+    // Remove images if requested
+    if (updateRoomDto.removeImages) {
+      const urlsToRemove = Array.isArray(updateRoomDto.removeImages)
+        ? updateRoomDto.removeImages
+        : [updateRoomDto.removeImages];
+
+      updatedImages = updatedImages.filter(img => !urlsToRemove.includes(img));
+    }
+
+    // Add new images
+    if (files && files.length > 0) {
+      try {
+        const uploadPromises = files.map(file => this.cloudinary.uploadImage(file));
+        const uploadResults = await Promise.all(uploadPromises);
+        const newImages = uploadResults.map(result => result.secure_url);
+        updatedImages = [...updatedImages, ...newImages];
+      } catch (error) {
+        throw new BadRequestException('Failed to upload one or more room images');
+      }
     }
 
     const updated = await this.repository.update(id, {
@@ -177,6 +223,7 @@ export class RoomsService {
       ...(updateRoomDto.status && {
         status: updateRoomDto.status as RoomStatus,
       }),
+      images: updatedImages,
       ...(updateRoomDto.facilities && {
         roomFacilities: {
           deleteMany: {},
@@ -216,6 +263,7 @@ export class RoomsService {
       priceYearly: Number(r.priceMonthly || 0) * 12,
       status: r.status,
       facilities: r.roomFacilities?.map((rf) => rf.facility) || [],
+      images: r.images || [],
       dimensions: {
         length: 3,
         width: 4.5,

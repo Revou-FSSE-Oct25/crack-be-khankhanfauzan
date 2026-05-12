@@ -27,6 +27,7 @@ export class PublicRepository {
             //  get all facilities
             this.prisma.facility.findMany({
                 select: {
+                    id: true,
                     name: true,
                     iconUrl: true,
                 }
@@ -44,6 +45,7 @@ export class PublicRepository {
                 orderBy: [{ rating: 'desc' }, { createdAt: 'desc' }],
                 take: 5,
                 select: {
+                    id: true,
                     rating: true,
                     comment: true,
                     booking: {
