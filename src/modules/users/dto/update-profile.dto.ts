@@ -19,16 +19,4 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsEnum(['single', 'married'] as unknown as MaritalStatus[])
   maritalStatus?: MaritalStatus;
-
-  @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'File Foto Profile' })
-  @IsOptional()
-  fotoProfileUrl?: any;
-
-  @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'File Foto KTP' })
-  @IsOptional()
-  fotoKtpUrl?: any;
-
-  @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'File Foto Buku Nikah' })
-  @IsOptional()
-  fotoBukuNikahUrl?: any;
 }

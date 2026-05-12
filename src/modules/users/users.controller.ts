@@ -86,11 +86,12 @@ export class UsersController {
 
   @Patch(':id/profile')
   @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Update user profile with file uploads' })
   @UseInterceptors(
     FileFieldsInterceptor([
-      { name: 'avatar', maxCount: 1 },
-      { name: 'ktp', maxCount: 1 },
-      { name: 'marriage', maxCount: 1 }
+      { name: 'fotoProfile', maxCount: 1 },
+      { name: 'fotoKtp', maxCount: 1 },
+      { name: 'fotoBukuNikah', maxCount: 1 }
     ], {
       fileFilter: (req, file, cb) => {
         if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
