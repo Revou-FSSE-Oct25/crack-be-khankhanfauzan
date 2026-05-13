@@ -243,7 +243,7 @@ export class BookingsService {
           bookingId: id,
           status: InvoiceStatus.unpaid, // Hanya batalkan yang belum dibayar
         },
-        data: { status: InvoiceStatus.expired }, // Anda juga bisa menambahkan enum 'cancelled' di schema Invoice jika diperlukan
+        data: { status: InvoiceStatus.cancelled },
       });
 
       return updatedBooking;

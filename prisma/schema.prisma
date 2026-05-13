@@ -49,6 +49,7 @@ enum BookingStatus {
   confirmed
   cancelled
   completed
+  expired
 
   @@map("booking_status_enum")
 }
@@ -86,6 +87,7 @@ enum InvoiceStatus {
   partially_paid
   paid
   expired
+  cancelled
 
   @@map("invoice_status_enum")
 }
