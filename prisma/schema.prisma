@@ -44,6 +44,7 @@ enum RoomStatus {
 }
 
 enum BookingStatus {
+  pending_approval
   pending_payment
   confirmed
   cancelled
