@@ -12,7 +12,7 @@ import { Prisma, Facility } from '@prisma/client';
 
 @Injectable()
 export class FacilitiesService {
-  constructor(private readonly repository: FacilitiesRepository) {}
+  constructor(private readonly repository: FacilitiesRepository) { }
 
   async create(createFacilityDto: CreateFacilityDto) {
     const existing = await this.repository.findByName(createFacilityDto.name);
@@ -22,9 +22,7 @@ export class FacilitiesService {
       );
     }
 
-    const newFacility = await this.repository.create({
-      name: createFacilityDto.name,
-    });
+    const newFacility = await this.repository.create(createFacilityDto);
     return {
       status: 201,
       message: 'Facility created',
@@ -90,9 +88,7 @@ export class FacilitiesService {
       throw new NotFoundException('Facility not found');
     }
 
-    const updated = await this.repository.update(id, {
-      name: updateFacilityDto.name,
-    });
+    const updated = await this.repository.update(id, updateFacilityDto);
     return {
       status: 200,
       message: 'Facility updated successfully',
