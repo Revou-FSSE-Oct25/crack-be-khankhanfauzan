@@ -20,5 +20,5 @@ export type RoomDimensions = {
   length: number;
   width: number;
   area?: number;
-  unit?: 'm';
+  unit?: string;
 };

@@ -223,6 +223,18 @@ export class RoomsService {
       ...(updateRoomDto.status && {
         status: updateRoomDto.status as RoomStatus,
       }),
+      ...(updateRoomDto.dimensions?.length !== undefined && {
+        length: updateRoomDto.dimensions.length,
+      }),
+      ...(updateRoomDto.dimensions?.width !== undefined && {
+        width: updateRoomDto.dimensions.width,
+      }),
+      ...(updateRoomDto.dimensions?.area !== undefined && {
+        area: updateRoomDto.dimensions.area,
+      }),
+      ...(updateRoomDto.dimensions?.unit !== undefined && {
+        unit: updateRoomDto.dimensions.unit,
+      }),
       images: updatedImages,
       ...(updateRoomDto.facilities && {
         roomFacilities: {
@@ -265,10 +277,10 @@ export class RoomsService {
       facilities: r.roomFacilities?.map((rf) => rf.facility) || [],
       images: r.images || [],
       dimensions: {
-        length: 3,
-        width: 4.5,
-        area: 3 * 4.5,
-        unit: 'm',
+        length: r.length != null ? Number(r.length) : 0,
+        width: r.width != null ? Number(r.width) : 0,
+        area: r.area != null ? Number(r.area) : undefined,
+        unit: r.unit || 'm',
       },
     };
   }
