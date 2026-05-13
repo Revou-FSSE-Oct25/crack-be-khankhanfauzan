@@ -111,7 +111,7 @@ export class BookingsService {
         endDate: end,
         pricePerUnit,
         totalPrice,
-        status: BookingStatus.pending_payment,
+        status: BookingStatus.pending_approval,
         invoices: {
           create: {
             totalAmount: totalPrice,
@@ -202,14 +202,14 @@ export class BookingsService {
   async approveBooking(id: string) {
     const booking = await this.repository.findById(id);
     if (!booking) throw new NotFoundException('Booking not found');
-    if (booking.status !== BookingStatus.pending_payment) {
+    if (booking.status !== BookingStatus.pending_approval) {
       throw new BadRequestException(
         `Cannot approve booking with status ${booking.status}`,
       );
     }
 
     const updated = await this.repository.update(id, {
-      status: BookingStatus.confirmed,
+      status: BookingStatus.pending_payment,
     });
 
     return {
@@ -231,8 +231,22 @@ export class BookingsService {
       );
     }
 
-    const updated = await this.repository.update(id, {
-      status: BookingStatus.cancelled,
+    // Gunakan transaksi agar Booking dan Invoice dibatalkan bersamaan
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const updatedBooking = await tx.booking.update({
+        where: { id },
+        data: { status: BookingStatus.cancelled },
+      });
+
+      await tx.invoice.updateMany({
+        where: {
+          bookingId: id,
+          status: InvoiceStatus.unpaid, // Hanya batalkan yang belum dibayar
+        },
+        data: { status: InvoiceStatus.expired }, // Anda juga bisa menambahkan enum 'cancelled' di schema Invoice jika diperlukan
+      });
+
+      return updatedBooking;
     });
 
     return {
@@ -293,25 +307,52 @@ export class BookingsService {
     yesterday.setHours(yesterday.getHours() - 24);
 
     try {
-      const result = await this.prisma.booking.updateMany({
+      // 1. Cari dulu ID booking yang akan expired agar kita bisa update relasinya
+      const expiredBookings = await this.prisma.booking.findMany({
         where: {
-          status: BookingStatus.pending_payment,
+          status: {
+            in: [BookingStatus.pending_approval, BookingStatus.pending_payment],
+          },
           createdAt: {
             lt: yesterday,
           },
         },
-        data: {
-          status: BookingStatus.cancelled,
-        },
+        select: { id: true }, // Ambil ID-nya saja agar enteng
       });
 
-      if (result.count > 0) {
+      const expiredBookingIds = expiredBookings.map((b) => b.id);
+
+      if (expiredBookingIds.length > 0) {
+        // 2. Jalankan update secara paralel menggunakan Prisma Transaction
+        await this.prisma.$transaction([
+          // Update Booking Status
+          this.prisma.booking.updateMany({
+            where: {
+              id: { in: expiredBookingIds },
+            },
+            data: {
+              status: BookingStatus.expired,
+            },
+          }),
+
+          // Update Invoice Status yang berelasi dengan booking yang expired
+          this.prisma.invoice.updateMany({
+            where: {
+              bookingId: { in: expiredBookingIds }, // Sesuaikan dengan field relasi di schemamu
+              status: InvoiceStatus.unpaid // Asumsi yang di-expired hanya yang unpaid
+            },
+            data: {
+              status: InvoiceStatus.expired,
+            },
+          }),
+        ]);
+
         this.logger.log(
-          `Successfully cancelled ${result.count} expired pending bookings.`,
+          `Successfully expired ${expiredBookingIds.length} bookings and their unpaid invoices.`,
         );
       }
     } catch (error) {
-      this.logger.error('Failed to cancel expired bookings', error);
+      this.logger.error('Failed to process expired bookings', error);
     }
   }
 
