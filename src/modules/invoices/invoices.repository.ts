@@ -1,6 +1,22 @@
 import { Injectable } from "@nestjs/common";
-import { Invoice, Prisma } from "@prisma/client";
+import { Invoice, Transaction, Booking, Room, User, Profile, Prisma } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
+
+export type InvoiceWithDetails = Invoice & {
+    booking: Booking & {
+        room: Room;
+        tenant?: {
+            id: string;
+            email: string;
+            role: string;
+            isVerified: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            profile: Profile | null;
+        } | null;
+    };
+    transactions: Transaction[];
+};
 
 @Injectable()
 export class InvoicesRepository {
@@ -11,7 +27,7 @@ export class InvoicesRepository {
         take?: number;
         where?: Prisma.InvoiceWhereInput;
         orderBy?: Prisma.InvoiceOrderByWithRelationInput;
-    }): Promise<Invoice[]> {
+    }): Promise<InvoiceWithDetails[]> {
         return await this.prisma.invoice.findMany({
             skip: params?.skip,
             take: params?.take,
@@ -23,10 +39,10 @@ export class InvoicesRepository {
                 },
                 transactions: true,
             },
-        });
+        }) as unknown as InvoiceWithDetails[];
     }
 
-    async findById(id: string): Promise<Invoice | null> {
+    async findById(id: string): Promise<InvoiceWithDetails | null> {
         return await this.prisma.invoice.findUnique({
             where: { id },
             include: {
@@ -48,6 +64,6 @@ export class InvoicesRepository {
                 },
                 transactions: true,
             },
-        });
+        }) as unknown as InvoiceWithDetails | null;
     }
 }

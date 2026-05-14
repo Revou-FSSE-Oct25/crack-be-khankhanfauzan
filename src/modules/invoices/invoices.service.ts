@@ -31,10 +31,31 @@ export class InvoicesService {
 
     if (!invoice) throw new NotFoundException('Invoice not found');
 
+    // Hitung total amount yang sudah dibayar dan diverifikasi
+    const totalPaid = invoice.transactions
+      .filter((t) => t.status === 'verified')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const totalAmount = Number(invoice.totalAmount);
+    const penaltyAmount = Number(invoice.penaltyAmount || 0);
+    const totalBilled = totalAmount + penaltyAmount;
+    
+    // Hitung sisa tagihan (remainingAmount)
+    const remainingAmount = Math.max(0, totalBilled - totalPaid);
+
+    const dataWithPaymentDetails = {
+      ...invoice,
+      paymentDetails: {
+        totalBilled,
+        totalPaid,
+        remainingAmount,
+      }
+    };
+
     return {
       status: 200,
       message: 'Invoice details fetched successfully',
-      data: invoice,
+      data: dataWithPaymentDetails,
     };
   }
 }
