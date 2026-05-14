@@ -10,7 +10,7 @@ import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator
 @ApiTags('Reviews')
 @Controller('reviews')
 export class ReviewsController {
-  constructor(private readonly reviewsService: ReviewsService) {}
+  constructor(private readonly reviewsService: ReviewsService) { }
 
   @Post()
   @ApiBearerAuth()
@@ -25,9 +25,16 @@ export class ReviewsController {
   }
 
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'tenant')
   @ApiOperation({ summary: 'Get all reviews with pagination & filtering' })
-  findAll(@Query() query: GetReviewsQueryDto) {
-    return this.reviewsService.findAll(query);
+  findAll(
+    @GetCurrentUser('sub') currentUserId: string,
+    @GetCurrentUser('role') currentUserRole: string,
+    @Query() query: GetReviewsQueryDto
+  ) {
+    return this.reviewsService.findAll(currentUserId, currentUserRole, query);
   }
 
   @Get(':id')

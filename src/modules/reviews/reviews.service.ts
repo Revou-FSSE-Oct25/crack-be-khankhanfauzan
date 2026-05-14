@@ -48,14 +48,31 @@ export class ReviewsService {
     return { status: 201, message: 'Review created successfully', data };
   }
 
-  async findAll(query: GetReviewsQueryDto): Promise<ApiListResponse<Review, { totalItems: number; page: number; perPage: number; totalPages: number; }>> {
+  async findAll(
+    currentUserId: string,
+    currentUserRole: string,
+    query: GetReviewsQueryDto
+  ): Promise<ApiListResponse<Review, { totalItems: number; page: number; perPage: number; totalPages: number; }>> {
     const { page = 1, perPage = 10, roomId, tenantId } = query || {};
     const where: Prisma.ReviewWhereInput = {};
 
-    if (roomId || tenantId) {
-      where.booking = {};
-      if (roomId) where.booking.roomId = roomId;
+    // Base condition for booking relation
+    where.booking = {};
+
+    // Role-based access control
+    if (currentUserRole === 'tenant') {
+      // Tenants can ONLY see their own reviews
+      where.booking.tenantId = currentUserId;
+    } else {
+      // Admins can filter by specific tenantId if provided
       if (tenantId) where.booking.tenantId = tenantId;
+    }
+
+    if (roomId) where.booking.roomId = roomId;
+
+    // Cleanup empty booking object if no conditions were added
+    if (Object.keys(where.booking).length === 0) {
+      delete where.booking;
     }
 
     const [data, totalItems] = await Promise.all([
