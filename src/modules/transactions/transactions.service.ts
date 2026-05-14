@@ -93,7 +93,7 @@ export class TransactionsService {
           (sum, t) => sum + Number(t.amount),
           0,
         );
-        const invoiceTotal = Number(transaction.invoice.totalAmount);
+        const invoiceTotal = Number(transaction.invoice.totalAmount) + Number(transaction.invoice.penaltyAmount || 0);
 
         if (totalPaid >= invoiceTotal) {
           // Lunas (Fully Paid)
