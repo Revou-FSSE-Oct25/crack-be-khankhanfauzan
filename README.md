@@ -212,6 +212,33 @@ flowchart TD
 
 ---
 
+## 🗂 Directory Tree Structure
+
+```text
+src/
+├── auth/                 # Authentication logic (JWT, Strategies, Guards)
+├── common/               # Shared utilities
+│   ├── decorators/       # Custom decorators (Roles, Public, GetCurrentUser)
+│   ├── filters/          # Global exception filters
+│   └── interceptors/     # Response transformation, timeouts
+├── prisma/               # Database ORM connection and client
+├── cloudinary/           # Cloudinary service integration
+├── modules/              # Feature modules (Domain Driven Design)
+│   ├── users/            # User profile, KYC uploads
+│   ├── rooms/            # Room CRUD, pricing, availability check
+│   ├── bookings/         # Reservation logic, checkout, cron jobs
+│   ├── invoices/         # Billing details, remaining amount calculations
+│   ├── transactions/     # Payment proofs, verification, partial payment
+│   ├── maintenances/     # Complaint ticketing, issue tracking
+│   ├── reviews/          # Ratings, RBAC fetching
+│   ├── facilities/       # Room amenities management
+│   ├── notifications/    # System alerts, payment reminders
+│   └── dashboard/        # Aggregated data for frontend views
+└── main.ts               # Application entry point
+```
+
+---
+
 ## 📚 API Reference (Swagger)
 
 Full interactive API documentation is available via Swagger UI.
