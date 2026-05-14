@@ -94,6 +94,13 @@ export class BookingsController {
     return this.bookingsService.rejectBooking(id);
   }
 
+  @Patch(':id/checkout')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Checkout a booking (Admin only)' })
+  checkout(@Param('id') id: string) {
+    return this.bookingsService.checkoutBooking(id);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update a booking' })
   update(@Param('id') id: string, @Body() updateBookingDto: UpdateBookingDto) {

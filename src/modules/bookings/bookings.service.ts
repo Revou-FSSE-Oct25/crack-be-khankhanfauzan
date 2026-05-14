@@ -256,6 +256,40 @@ export class BookingsService {
     };
   }
 
+  async checkoutBooking(id: string) {
+    const booking = await this.repository.findById(id);
+    if (!booking) throw new NotFoundException('Booking not found');
+
+    if (booking.status !== BookingStatus.confirmed) {
+      throw new BadRequestException(
+        `Cannot checkout booking with status ${booking.status}. Only confirmed bookings can be checked out.`,
+      );
+    }
+
+    // Gunakan transaksi agar Booking dan Room diupdate bersamaan
+    const updated = await this.prisma.$transaction(async (tx) => {
+      // 1. Ubah status booking menjadi completed
+      const updatedBooking = await tx.booking.update({
+        where: { id },
+        data: { status: BookingStatus.completed },
+      });
+
+      // 2. Kosongkan kembali kamar tersebut (ubah status room jadi available)
+      await tx.room.update({
+        where: { id: booking.roomId },
+        data: { status: 'available' },
+      });
+
+      return updatedBooking;
+    });
+
+    return {
+      status: 200,
+      message: 'Checkout successful. Booking completed and room is now available.',
+      data: updated,
+    };
+  }
+
   @Cron(CronExpression.EVERY_DAY_AT_8AM) // Berjalan setiap jam 8 pagi
   async handlePaymentReminders() {
     this.logger.log('Running cron job for payment reminders...');

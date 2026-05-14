@@ -53,7 +53,7 @@ export class PublicRepository {
                             tenant: {
                                 select: {
                                     profile: {
-                                        select: { fullName: true }
+                                        select: { fullName: true, fotoProfileUrl: true }
                                     }
                                 }
                             }
